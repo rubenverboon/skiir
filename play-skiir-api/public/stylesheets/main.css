@@ -1,0 +1,7 @@
+body { background:#777 }
+#wrapper { width:600px; margin: 1em auto; border-radius: 10px; background: white; box-shadow: 0 0 10px rgba(0,0,0,.5); overflow: hidden; padding: 10px; }
+
+body .wrapper { width: auto; }
+body #top { margin: -10px -10px 0 -10px; padding: 0 10px; }
+body #content { padding: 30px 0 0; }
+body .wrapper article { width: 100%; }

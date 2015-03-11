@@ -1,7 +1,20 @@
 @(message: String)
 
 @main("Welcome to Play") {
-
-    @play20.welcome(message)
-
+    <article>
+        <h1>Welcome to SkiIR</h1>
+        <p>Congratulations, you’ve just started a local SkiIR server.</p>
+        <blockquote>
+            <p>You’re using Play 2.3.8</p>
+        </blockquote>
+        <h2>What now?</h2>
+        <ul>
+            <li>Fire-up the browser extension, </li>
+            <li>point te extension to your local server (should detect automatically) and </li>
+            <li>start browsing news websites!</li>
+        </ul>
+        <pre><code># API
+GET     /requests               Get all annotation requests
+GET     /annotations            Get all annotations</code></pre>
+    </article>
 }
