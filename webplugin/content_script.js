@@ -158,7 +158,6 @@ function getSelectionParentElement() {
     return parentEl;
 }
 
-
 // Message handler (from background.js)
 chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
 

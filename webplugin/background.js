@@ -1,3 +1,27 @@
+// The onClicked callback function.
+function onClickHandler(info, tab) {
+
+    var details = {
+        phrase: info.selectionText,
+        pageUrl: info.pageUrl
+    };
+
+    chrome.tabs.sendMessage(tab.id, {details: details});
+}
+
+// This function is called on load in the popup code
+function getPageDetails(callback) { 
+    console.log("getPageDetails");
+    // Inject the content script into the current page 
+    chrome.tabs.executeScript(null, { file: 'selection.js' }); 
+    // Perform the callback when a message is received from the content script
+    chrome.runtime.onMessage.addListener(function(message)  { 
+        console.log("something else");
+        // Call the callback function
+        callback(message); 
+    }); 
+};
+
 chrome.runtime.onInstalled.addListener(function() {
     // Replace all rules ...
     chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
@@ -28,17 +52,7 @@ chrome.runtime.onInstalled.addListener(function() {
 // add click event
 chrome.contextMenus.onClicked.addListener(onClickHandler);
 
-// The onClicked callback function.
-function onClickHandler(info, tab) {
 
-    var details = {
-        phrase: info.selectionText,
-        pageUrl: info.pageUrl
-    };
-
-    chrome.tabs.sendMessage(tab.id, {details: details});
-}
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-
 });
