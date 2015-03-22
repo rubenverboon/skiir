@@ -12,6 +12,8 @@ GET        /articles            controllers.API.articles
 
 GET        /articles/:id        controllers.API.singleArticle(id: Long)
 
+GET        /explain/:text       controllers.Crawler.explain(text: String)
+
 # Testing
 GET        /seed                controllers.Seed.seed
 
