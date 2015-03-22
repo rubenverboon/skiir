@@ -13,8 +13,11 @@
             <li>point te extension to your local server (should detect automatically) and </li>
             <li>start browsing news websites!</li>
         </ul>
-        <pre><code># API
+        <pre><code># Basic API
 GET     /requests               Get all annotation requests
-GET     /annotations            Get all annotations</code></pre>
+GET     /articles               Get all articles we have in the database
+GET     /articles/:id           Get specific article, plus all annotations and annotation requests in database
+# Semantic tools
+GET     /explain/:text          Get DbPedia entries for all (AlchemyAPI) concepts in the given text</code></pre>
     </article>
 }

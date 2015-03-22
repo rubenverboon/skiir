@@ -21,4 +21,13 @@ Then, when you have edited the application.conf file to contain your database cr
 sbt run # Assuming you have sbt
 ````
 
-Now the API will be running at [http://localhost:9000](http://localhost:9000).
+Now the API will be running at [http://localhost:9000](http://localhost:9000). At least the following end-points exist:
+
+````
+# Basic API
+GET     /requests               Get all annotation requests
+GET     /articles               Get all articles we have in the database
+GET     /articles/:id           Get specific article, plus all annotations and annotation requests in database
+# Semantic tools
+GET     /explain/:text          Get DbPedia entries for all (AlchemyAPI) concepts in the given text
+````
