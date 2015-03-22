@@ -214,6 +214,12 @@ function replaceSelection(html, selectInserted) {
     }
 }
 
+function ajax(url,method,callback,body) {
+    var call = new XMLHttpRequest();
+    call.onreadystatechange=function() {if(call.readyState==4) callback(call.responseText);}
+    call.open(method,url,true);
+    call.send(body || null);
+}
 
 // Message handler (from background.js)
 chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
@@ -226,8 +232,18 @@ chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
 
         addExplanationRequest(exReq);
 
-        //TODO: send data to the server and popup.js (through background.js?)
-        //console.log(data);
-        console.info("Send annotation request to server", exReq);
+        //TODO: send data to popup.js (through background.js?)
+        ajax("http://localhost:9000/requests", "POST", function(){
+            // TODO: give feedback to user (checkmark overlay/anything)
+            console.log("Saved at server");
+        }, JSON.stringify({
+            "article_url": window.location.href,
+            "article_title": document.title,
+            "article_text": document.body.innerText,
+            "request_text": exReq.phrase,
+            "request_text_surroundings": exReq.paragraph.innerText
+        }));
+
+        console.debug("Send annotation request to server", exReq);
     }
 });
