@@ -6,10 +6,14 @@
 GET        /                    controllers.Application.index
 
 GET        /requests            controllers.API.requests
+POST       /requests            controllers.API.addRequest
 
 GET        /articles            controllers.API.articles
 
 GET        /articles/:id        controllers.API.singleArticle(id: Long)
+
+# Testing
+GET        /seed                controllers.Seed.seed
 
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file        controllers.Assets.at(path="/public", file)
