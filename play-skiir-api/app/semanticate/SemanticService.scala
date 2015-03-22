@@ -1,23 +1,18 @@
 package semanticate
 
-import java.io._
 import java.security
-import javax.xml.transform.dom.DOMSource
-import javax.xml.transform.stream.StreamResult
-import javax.xml.transform.{TransformerException, TransformerFactory}
 
-import com.likethecolor.alchemy.api.Client
-import com.likethecolor.alchemy.api.call.RankedConceptsCall
+import com.likethecolor.alchemy.api._
+import com.likethecolor.alchemy.api.call._
 import com.likethecolor.alchemy.api.call.`type`.CallTypeText
-import com.likethecolor.alchemy.api.entity.ConceptAlchemyEntity
-import org.w3c.dom.Document
+import com.likethecolor.alchemy.api.entity._
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.WS
 import play.api.{Logger, Play}
-import scala.collection.JavaConversions._
 
+import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -40,6 +35,7 @@ class SemanticServiceImpl extends SemanticService {
 
   override def findConcepts(text: String): Future[List[ConceptAlchemyEntity]] = Future {
     val docs = Cache.getOrElse("alchemy-json-"+hasher.digest(text.getBytes), 3600){
+      Logger.debug("Calling Alchemy API")
       val resp = alchemy.call(new RankedConceptsCall(new CallTypeText(text)))
       resp.iterator.toList
     }
@@ -51,45 +47,24 @@ class SemanticServiceImpl extends SemanticService {
       case Some(url) => dbPediaByUrl(url)
       case _ => dbPediaByTerm(concept.getConcept)
     }
-    dbp.map(jsval => {
-      println(jsval)
-      Entity(concept, Some(jsval))
-    })
-  }
-
-  // utility method
-  private def getStringFromDocument(doc: Document): String = {
-    try {
-      val domSource = new DOMSource(doc)
-      val writer = new StringWriter()
-      val result = new StreamResult(writer)
-
-      val tf = TransformerFactory.newInstance()
-      val transformer = tf.newTransformer()
-      transformer.transform(domSource, result)
-
-      writer.toString
-  } catch {
-      case ex: TransformerException => ex.printStackTrace()
-        throw new RuntimeException("Something went wrong")
-    }
+    dbp.map(jsval => Entity(concept, Some(jsval)))
   }
 
   private def dbPediaByTerm(term: String): Future[JsValue] = {
     WS.url(s"http://dbpedia.org/sparql").withQueryString(
-      "query" -> s"""PREFIX dbp: <http://dbpedia.org/resource/>
-                     PREFIX dbp2: <http://dbpedia.org/ontology/>
-
-                     SELECT ?abstract
-                     WHERE {
-                        dbp:${term.replaceAll("[^a-zA-Z0-9\\s]", "-")} dbp2:abstract ?abstract .
-                        FILTER langMatches(lang(?abstract), 'en')
-                     }""",
+      "query" -> s"""SELECT DISTINCT ?entity ?label ?score1
+                     WHERE{
+                       ?entity ?p ?label.
+                       ?label <bif:contains> "'${term.replaceAll("[^a-zA-Z0-9\\s]", "-")}'" OPTION(score ?score1).
+                       FILTER (?p=<http://www.w3.org/2000/01/rdf-schema#label>).
+                       ?entity a ?type.
+                       FILTER isIRI(?entity).
+                     } ORDER BY desc(?score1)""",
       "format" -> "json"
-    ).get().map(resp => {
-      println(resp.body)
-      Json.parse(resp.body)
-    })
+    ).get().map {
+      case r if r.status == 200 => Json.parse(r.body)
+      case r => throw new RuntimeException(r.body)
+    }
   }
 
   private def dbPediaByUrl(url: String): Future[JsValue] = {
@@ -103,9 +78,9 @@ class SemanticServiceImpl extends SemanticService {
                         FILTER langMatches(lang(?abstract), 'en')
                      }""",
       "format" -> "json"
-    ).get().map(resp => {
-      println(resp.body)
-      Json.parse(resp.body)
-    })
+    ).get().map {
+      case r if r.status == 200 => Json.parse(r.body)
+      case r => throw new RuntimeException(r.body)
+    }
   }
 }
