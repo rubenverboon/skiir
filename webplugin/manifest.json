@@ -6,7 +6,10 @@
   "permissions": [
     "declarativeContent",
     "tabs",
-    "contextMenus"
+    "contextMenus",
+    "http://localhost/",
+    "https://ajax.googleapis.com/",
+    "http://www.bloomberg.com/"
   ],
   "content_scripts": [
     {
@@ -29,7 +32,8 @@
   "background": {
     "scripts": [
       "background.js",
-      "popup.js" ],
+      "popup.js" ,
+      "jquery-2.1.3.js"],
     "persistent": false
   }
 }
