@@ -15,15 +15,18 @@ var testExs = [
         original: 'Tsipras has also stepped up calls for war reparations from Germany for the Nazi occupation during World War II and Greek Finance Minister Yanis Varoufakis has been locked in a war of words with his German counterpart Wolfgang Schaeuble. Last week, the Greek government officially complained about Schaeuble’s conduct, to which Schaeuble replied that the whole matter was “absurd.”',
         phrase: 'Tsipras has also stepped up calls',
         explanation: 'Alexis Tsipras, leader of the (extreme) left Syriza party, was sworn in Monday January 26, 2015 as Greek prime minister, setting the stage for a showdown with creditors over painful budget cuts and tax increases that could have potential ripple effects across the European Union.'
+    },
+    {
+        id: 2,
+        original: '“They’ve got a lot of hubris and arrogance, being in the situation they’re in and making all these demands,” said Mueller, 49, waiting for fares near the Brandenburg Gate. “Maybe it’s better for Greece to just leave the euro.”',
+        phrase: 'arrogance',
+        explanation: "Like, being a cocky bitch"
     }
 ]
 
 
-//
-//id: 1,
-//    original: '“They’ve got a lot of hubris and arrogance, being in the situation they’re in and making all these demands,” said Mueller, 49, waiting for fares near the Brandenburg Gate. “Maybe it’s better for Greece to just leave the euro.”',
-//    phrase: 'arrogance',
-//    explanation: "Like, being a cocky bitch",
+
+
 
 
 var explanationRequests = [], explanations = [];
