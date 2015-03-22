@@ -1,0 +1,51 @@
+.skiir-help {
+    background: none;
+    border: none;
+    border-bottom: 1px solid red;
+    padding: 0;
+}
+
+.skiir-explanation {
+    border-bottom: 1px solid green;
+    cursor: help;
+}
+
+.skiir-explanation div {
+    display: none;
+    margin: 20px;
+    padding: 10px;
+    background-color: gainsboro;
+    font-style: italic;
+}
+
+.skiir-explanation:hover div {
+    display: block;
+}
+
+#skiir-dialog {
+    background: #FFF;
+    width: 500px;
+    text-align: center;
+    padding: 1.5em;
+    margin: 1em auto;
+    border: 0;
+    border-top: 5px solid #69c773;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    z-index: 100;
+
+    position: fixed;
+    top: 50%;
+    height: 400px;
+    margin-top: -100px;
+
+}
+
+#skiir-dialog::backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+}
+

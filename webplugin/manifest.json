@@ -1,0 +1,35 @@
+{
+  "manifest_version": 2,
+  "name": "Skiir Plugin",
+  "description": "Request for explanations in articles on Bloomberg.com",
+  "version": "1.0",
+  "permissions": [
+    "declarativeContent",
+    "tabs",
+    "contextMenus"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["http://www.bloomberg.com/*"],
+      "run_at": "document_end",
+      "js": [
+        "content_script.js"
+      ]
+    },
+
+    {
+      "matches": ["http://www.bloomberg.com/*"],
+      "all_frames": true,
+      "css": ["style.css"]
+    }
+  ],
+  "page_action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "scripts": [
+      "background.js",
+      "popup.js" ],
+    "persistent": false
+  }
+}
