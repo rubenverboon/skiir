@@ -8,6 +8,7 @@ import play.api.db.DB
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsArray, Json}
 import play.api.mvc._
+import anorm.SqlParser._
 
 object API extends Controller {
 
@@ -77,5 +78,43 @@ object API extends Controller {
       )).toList
     }
   }
+
+  /**
+   * Handles new requests
+   * @return A Redirect to the article to which the request was added or a BadRequest
+   */
+  def addRequest() = Action { request => DB.withConnection { implicit c =>
+    request.body.asJson.map { json =>
+
+      // Get article id, either given or by looking up the url, or inserting the article
+      val article_id = (json \ "article_id").asOpt[Long].orElse((json \ "article_url").asOpt[String].flatMap(url => {
+        // Look up if we have the article already
+        SQL("SELECT article_id FROM article WHERE article_url LIKE {url}").on('url -> url).as(scalar[Long].singleOpt).orElse {
+          // Insert the article
+          SQL("INSERT INTO article (article_url, article_title, article_text, article_date, date_added) VALUES ({url}, {title}, {text}, {article_date}, {date_added})").on(
+            'url ->   (json \ "article_url").asOpt[String].get,
+            'title -> (json \ "article_title").asOpt[String].get,
+            'text ->  (json \ "article_text").asOpt[String].get,
+            'article_date ->  (json \ "article_date").asOpt[Date],
+            'date_added ->    new Date()
+          ).executeInsert[Option[Long]]()
+        }
+      }))
+
+      // Store request
+      (article_id, (json \ "request_text").asOpt[String], (json \ "request_text_surroundings").asOpt[String]) match {
+        case (Some(aid), Some(text), Some(surround)) =>
+          // If we have all parameters then insert
+          val id = SQL"""INSERT INTO request
+            (article_id, request_text, request_text_surroundings, date_asked)
+            VALUES ($aid,$text,$surround,${new Date})""".executeInsert[Option[Long]]()
+          id match {
+            case Some(req) => Redirect(routes.API.singleArticle(aid)+s"?req_id=$req")
+            case _ => BadRequest("Something went wrong while inserting request")
+          }
+        case _ => BadRequest("Provide the fields article_id, request_text, request_text_surroundings. Instead of giving an article_id an article can be directly looked up/created by providing article_url, article_text and article_date.")
+      }
+    }.getOrElse(BadRequest("Expecting Json data in request body"))
+  }}
 
 }
