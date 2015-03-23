@@ -34,9 +34,7 @@ var testExs = [
         phrase: 'Tsipras took office in January',
         explanation: 'Alexis Tsipras, leader of the (extreme) left Syriza party, was sworn in Monday January 26, 2015 as Greek prime minister, setting the stage for a showdown with creditors over painful budget cuts and tax increases that could have potential ripple effects across the European Union.'
     }
-]
-
-
+];
 
 
 
@@ -91,26 +89,29 @@ var dialog = document.createElement('dialog');
 
 
 
-function addExplanation(exReq) {
-    var html = '<span class="skiir-exReqplanation">'+exReq.phrase+'<div>'+exReq.exReqplanation+'</div></span>';
-    if(!exReq.paragraph) return console.warn("Are you running a test?");
-    replaceSelection(html);
+function addExplanation(ex) {
+    var html = '<span class="skiir-explanation">'+ex.phrase+'<div>'+ex.explanation+'</div></span>';
+    //if(!exReq.paragraph) return console.warn("Are you running a test?");
+    ex.paragraph.innerHTML = ex.paragraph.innerHTML.replace(ex.phrase, html);
 }
 
 function addExplanationRequest(exReq) {
     var button = document.createElement('button');
     button.className = 'skiir-help';
     button.textContent = exReq.phrase;
-    button.onclick = function(e) { openDialog( exReq ); };
+    //if(!exReq.paragraph) return console.warn("Are you running a test?");
 
-    if(!exReq.paragraph) return console.warn("Are you running a test?");
-    replaceSelection(button);
+    exReq.paragraph.innerHTML = exReq.paragraph.innerHTML.replace(exReq.phrase, button.outerHTML);
+
+    exReq.paragraph.querySelector('.skiir-help').onclick = function(e) { openDialog( exReq ); };
 }
 
 function updateExplanationRequest(exReq) {
     var button = exReq.paragraph.querySelector('.skiir-help');
-    if(!exReq.paragraph) return console.warn("Are you running a test?");
+    //if(!exReq.paragraph) return console.warn("Are you running a test?");
+    exReq.paragraph.innerHTML = exReq.paragraph.innerHTML.replace(button.outerHTML, exReq.phrase);
     addExplanation(exReq);
+
 }
 
 function openDialog(exReq) {
@@ -118,7 +119,7 @@ function openDialog(exReq) {
     dialog.querySelector('h3').textContent = exReq.phrase;
 
     dialog.querySelector('#done').onclick = function(e) {
-        exReq.explanation = dialog.querySelector('textarea').value;;
+        exReq.explanation = dialog.querySelector('textarea').value;
         updateExplanationRequest(exReq);
 
         // TODO: send update to serve
