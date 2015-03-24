@@ -2,33 +2,34 @@ package controllers
 
 import java.util.Date
 
+import anorm.SqlParser._
 import anorm._
 import play.api.Play.current
+import play.api.UsefulException
 import play.api.db.DB
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsArray, Json}
 import play.api.mvc._
-import anorm.SqlParser._
 
 object API extends Controller {
 
   val articleUrlLength = 100
   val articleTitleLength = 40
 
-  def articles = Action {
-    Ok(JsArray(getArticles()))
+  def articles = Action { request =>
+    val params = request.queryString.mapValues(_.headOption)
+    Ok(JsArray(getArticles(params)))
   }
 
   def requests = Action {
     Ok(getRequests())
   }
 
-  def getArticles(id: Option[Long] = None) = {
+  def getArticles(filter: Map[String,Option[String]]) = {
+    val allowed_filter = filter.filterKeys(Seq("id", "url").contains)
     DB.withConnection { implicit c =>
-      val query = id match {
-        case Some(aid) => SQL("SELECT * FROM article WHERE article_id = {aid}").on('aid -> aid)
-        case _ => SQL("SELECT * FROM article")
-      }
+      val sql = "SELECT * FROM article" + (if(allowed_filter.nonEmpty) allowed_filter.map(t => s"article_${t._1} = {${t._1}}").mkString(" WHERE ", " AND ", "") else "")
+      val query = SQL(sql).on(allowed_filter.map(t => NamedParameter(t._1, t._2)).toSeq :_*)
       query().map(row => Json.obj(
         "id" -> row[Long]("article_id"),
         "url" -> row[String]("article_url"),
@@ -40,12 +41,19 @@ object API extends Controller {
     }
   }
 
-  def singleArticle(id: Long) = Action {
-    val resultList = getArticles(Some(id))
-    Ok(resultList(0) ++ Json.obj(
-      "requests" -> getRequests(Some(id)),
-      "annotations" -> getAnnotations(Some(id))
-    ))
+  def singleArticle() = Action { request =>
+    val params = request.queryString.mapValues(_.headOption)
+    val resultList = getArticles(params)
+    try
+      resultList.singleOption.map(_ \ "id").flatMap(_.asOpt[Long]).map(id =>
+        Ok(resultList(0) ++ Json.obj(
+          "requests" -> getRequests(Some(id)),
+          "annotations" -> getAnnotations(Some(id))
+        ))
+      ).getOrElse(NotFound)
+    catch {
+      case e: NonSingletonListException => BadRequest(s"Provide GET parameters that discriminate the articles to a unique article.")
+    }
   }
 
   def getRequests(article_id: Option[Long] = None) = {
@@ -113,7 +121,7 @@ object API extends Controller {
             (article_id, request_text, request_text_surroundings, date_asked)
             VALUES ($aid,$text,$surround,${new Date})""".executeInsert[Option[Long]]()
           id match {
-            case Some(req) => Redirect(routes.API.singleArticle(aid)+s"?req_id=$req")
+            case Some(req) => Redirect(routes.API.singleArticle()+s"?id=$aid&req_id=$req")
             case _ => BadRequest("Something went wrong while inserting request")
           }
         case _ => BadRequest("Provide the fields article_id, request_text, request_text_surroundings. Instead of giving an article_id an article can be directly looked up/created by providing article_url, article_text and article_date.")
@@ -121,4 +129,20 @@ object API extends Controller {
     }.getOrElse(BadRequest("Expecting Json data in request body"))
   }}
 
+  implicit class SingleOptionList[T](val list: List[T]) {
+    def singleOption: Option[T] = {
+      val i = list.iterator
+      val res =
+        if(i.hasNext)
+          Some(i.next)
+        else
+          None
+
+      if(i.hasNext)
+        throw new NonSingletonListException("The result set contains multiple elements where only one element was expected.")
+      res
+    }
+  }
+
+  class NonSingletonListException(val message: String) extends UsefulException(message) {}
 }
