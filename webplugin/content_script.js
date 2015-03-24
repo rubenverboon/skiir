@@ -224,12 +224,18 @@ function replaceSelection(html, selectInserted) {
   }
 }
 
-function ajax(url, method, callback, body) {
+function ajax(url, method, callback, body, headers) {
   var call = new XMLHttpRequest();
   call.onreadystatechange = function () {
     if (call.readyState == 4) callback(call.responseText);
   }
+
   call.open(method, url, true);
+
+  for(var key in (headers || {})){
+    call.setRequestHeader(key, headers[key]);
+  }
+
   call.send(body || null);
 }
 
@@ -257,7 +263,9 @@ chrome.runtime.onMessage.addListener(function (req, sender, sendResponse) {
       "article_text": document.body.innerText,
       "request_text": exReq.phrase,
       "request_text_surroundings": exReq.paragraph.innerText
-    }));
+    }), {
+      "Content-Type": "application/json"
+    });
 
     console.debug("Send annotation request to server", exReq);
     sendResponse({farewell: "goodbye"});
