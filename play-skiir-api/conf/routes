@@ -11,8 +11,7 @@ GET        /requests            controllers.API.requests
 POST       /requests            controllers.API.addRequest
 
 GET        /articles            controllers.API.articles
-
-GET        /articles/:id        controllers.API.singleArticle(id: Long)
+GET        /articles/single     controllers.API.singleArticle
 
 GET        /explain/:text       controllers.Crawler.explain(text: String)
 
