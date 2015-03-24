@@ -12,6 +12,9 @@ import anorm.SqlParser._
 
 object API extends Controller {
 
+  val articleUrlLength = 100
+  val articleTitleLength = 40
+
   def articles = Action {
     Ok(JsArray(getArticles()))
   }
@@ -85,8 +88,8 @@ object API extends Controller {
    */
   def addRequest() = Action { request => DB.withConnection { implicit c =>
     request.body.asJson.map { json =>
-      val urlOpt = (json \ "article_url").asOpt[String].map(_.substring(0,100))
-      val title = (json \ "article_title").asOpt[String].map(_.substring(0,40))
+      val urlOpt = (json \ "article_url").asOpt[String].map(_.take(articleUrlLength))
+      val title = (json \ "article_title").asOpt[String].map(_.take(articleTitleLength))
       // Get article id, either given or by looking up the url, or inserting the article
       val article_id = (json \ "article_id").asOpt[Long].orElse(urlOpt.flatMap(url => {
         // Look up if we have the article already
