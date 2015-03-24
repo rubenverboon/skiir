@@ -85,15 +85,16 @@ object API extends Controller {
    */
   def addRequest() = Action { request => DB.withConnection { implicit c =>
     request.body.asJson.map { json =>
-
+      val urlOpt = (json \ "article_url").asOpt[String].map(_.substring(0,100))
+      val title = (json \ "article_title").asOpt[String].map(_.substring(0,40))
       // Get article id, either given or by looking up the url, or inserting the article
-      val article_id = (json \ "article_id").asOpt[Long].orElse((json \ "article_url").asOpt[String].flatMap(url => {
+      val article_id = (json \ "article_id").asOpt[Long].orElse(urlOpt.flatMap(url => {
         // Look up if we have the article already
         SQL("SELECT article_id FROM article WHERE article_url LIKE {url}").on('url -> url).as(scalar[Long].singleOpt).orElse {
           // Insert the article
           SQL("INSERT INTO article (article_url, article_title, article_text, article_date, date_added) VALUES ({url}, {title}, {text}, {article_date}, {date_added})").on(
-            'url ->   (json \ "article_url").asOpt[String].get,
-            'title -> (json \ "article_title").asOpt[String].get,
+            'url ->   urlOpt.get,
+            'title -> title.get,
             'text ->  (json \ "article_text").asOpt[String].get,
             'article_date ->  (json \ "article_date").asOpt[Date],
             'date_added ->    new Date()
