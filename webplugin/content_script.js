@@ -36,6 +36,12 @@ var testExs = [
   }
 ];
 
+$.extend($.expr[':'], {
+    containsEscaped: function (el, index, m) {  
+        var s = unescape(m[3]).replace(/[\s\n]+/g," ").trim();
+        return $(el).text().replace(/[\s\n]+/g," ").indexOf(s) >= 0;
+    }  
+});
 
 var explanationRequests = [], explanations = [];
 
@@ -64,28 +70,41 @@ var dialog = document.createElement('dialog');
   };
   document.body.insertBefore(dialog, document.body.firstChild);
 
-  // update de DOM met buttons en explanation components
-  // TODO: Bug! only 1 request per paragraph!
-  for (var idx in explanationRequests) {
-    var exReq = explanationRequests[idx];
-
-    // search page for explanationRequest.original
-    exReq.paragraph = getParagraphOfText(exReq.original);
-
-    // replace with button
-    addExplanationRequest(exReq);
-  }
-
-  for (var idx in explanations) {
-    var explanation = explanations[idx];
-
-    explanation.paragraph = getParagraphOfText(explanation.original);
-
-    addExplanation(explanation);
-  }
+  $.ajax({
+    url: "http://localhost:9000/articles/single",
+    method: "GET",
+    data: { "url": window.location.href }
+  }).done(function(article){
+    show(article.requests, article.annotations);
+  }).fail(function(){
+    console.log("Request failed", arguments);
+  });
+  
+  show(explanationRequests, explanations);
 
 })();
 
+function show(requests, explanations){
+  // update de DOM met buttons en explanation components
+  // TODO: Bug! only 1 request per paragraph!
+  requests.forEach(function(r){
+    // search page for explanationRequest.original
+    r.paragraph = getParagraphOfText(r.text_surroundings || r.original, r.text || r.phrase);
+    r.phrase = r.text || r.phrase;
+    // replace with button
+    addExplanationRequest(r);
+  });
+
+  explanations.forEach(function(e){
+    if(e.request_id){
+      var req = requests.filter(function(r){ return r.id == e.request_id })[0];
+      e.original = req && req.text_surroundings;
+      e.phrase = r.text;
+    }
+    e.paragraph = getParagraphOfText(e.original);
+    addExplanation(e);
+  });
+}
 
 function addExplanation(ex) {
   var html = '<span class="skiir-explanation">' + ex.phrase + '<div>' + ex.explanation + '</div></span>';
@@ -103,7 +122,7 @@ function addExplanationRequest(exReq) {
   button.textContent = exReq.phrase;
   //if(!exReq.paragraph) return console.warn("Are you running a test?");
   try {
-    exReq.paragraph.innerHTML = exReq.paragraph.innerHTML.replace(exReq.phrase, button.outerHTML);
+    exReq.paragraph.innerHTML = exReq.paragraph.innerHTML.replace(/\n+/g, " ").replace(exReq.phrase, button.outerHTML);
 
     exReq.paragraph.querySelector('.skiir-help').onclick = function (e) {
       openDialog(exReq);
@@ -117,7 +136,7 @@ function addExplanationRequest(exReq) {
 function updateExplanationRequest(exReq) {
   var button = exReq.paragraph.querySelector('.skiir-help');
   //if(!exReq.paragraph) return console.warn("Are you running a test?");
-  exReq.paragraph.innerHTML = exReq.paragraph.innerHTML.replace(button.outerHTML, exReq.phrase);
+  exReq.paragraph.innerHTML = exReq.paragraph.innerHTML.replace(/\n+/g, " ").replace(button.outerHTML, exReq.phrase);
   addExplanation(exReq);
 
 }
@@ -142,17 +161,10 @@ function openDialog(exReq) {
   };
 }
 
-function getParagraphOfText(text) {
-  var elements = document.querySelectorAll(".article-body p");
-
-  for (var i = 0; i < elements.length; i++) {
-    var el = elements[i];
-
-    // TODO: BUG! deze check is niet netjes!!!
-    if (el.textContent.split(' ')[0] == text.split(' ')[0]) {
-      return el;
-    }
-  }
+function getParagraphOfText(surround, text) {
+  var match = $("p:containsEscaped("+escape(surround)+") p:containsEscaped("+escape(text)+")");
+  match = match.size() && match || $("p:containsEscaped("+escape(text)+")");
+  return match.get(0);
 }
 
 function getSelectionParentElement() {
@@ -224,15 +236,6 @@ function replaceSelection(html, selectInserted) {
   }
 }
 
-function ajax(url, method, callback, body) {
-  var call = new XMLHttpRequest();
-  call.onreadystatechange = function () {
-    if (call.readyState == 4) callback(call.responseText);
-  }
-  call.open(method, url, true);
-  call.send(body || null);
-}
-
 sendResponse = function () {
 };
 console.log("herehere");
@@ -248,16 +251,21 @@ chrome.runtime.onMessage.addListener(function (req, sender, sendResponse) {
     addExplanationRequest(exReq);
 
     //TODO: send data to popup.js (through background.js?)
-    ajax("http://localhost:9000/requests", "POST", function () {
-      // TODO: give feedback to user (checkmark overlay/anything)
-      console.log("Saved at server");
-    }, JSON.stringify({
-      "article_url": window.location.href,
-      "article_title": document.title,
-      "article_text": document.body.innerText,
-      "request_text": exReq.phrase,
-      "request_text_surroundings": exReq.paragraph.innerText
-    }));
+    $.ajax({
+      url: "http://localhost:9000/requests",
+      method: "POST",
+      data: {
+        "article_url": window.location.href,
+        "article_title": document.title,
+        "article_text": document.body.innerText,
+        "request_text": exReq.phrase,
+        "request_text_surroundings": exReq.paragraph.innerText
+      },
+      complete: function(){
+        // TODO: give feedback to user (checkmark overlay/anything)
+        console.log("Saved at server");
+      }
+    });
 
     console.debug("Send annotation request to server", exReq);
     sendResponse({farewell: "goodbye"});
