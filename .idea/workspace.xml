@@ -2,9 +2,20 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1097f412-0059-45cf-99b4-0911db0320c2" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/webplugin/referenceDialog.html" afterPath="" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/play-skiir-api/app/controllers/CORSFilter.scala" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/play-skiir-api/app/Global.scala" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/info-retrieval/home.php" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/webplugin/.idea/misc.xml" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/webplugin/.idea/modules.xml" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/webplugin/.idea/workspace.xml" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/play-skiir-api/app/controllers/API.scala" afterPath="$PROJECT_DIR$/play-skiir-api/app/controllers/API.scala" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/play-skiir-api/app/controllers/Application.scala" afterPath="$PROJECT_DIR$/play-skiir-api/app/controllers/Application.scala" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/webplugin/background.js" afterPath="$PROJECT_DIR$/webplugin/background.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/webplugin/content_script.js" afterPath="$PROJECT_DIR$/webplugin/content_script.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/webplugin/style.css" afterPath="$PROJECT_DIR$/webplugin/style.css" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/play-skiir-api/app/views/index.scala.html" afterPath="$PROJECT_DIR$/play-skiir-api/app/views/index.scala.html" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/play-skiir-api/conf/routes" afterPath="$PROJECT_DIR$/play-skiir-api/conf/routes" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="skiir.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -25,16 +36,14 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="content_script.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="content_script.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/webplugin/content_script.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="45" column="20" selection-start-line="45" selection-start-column="8" selection-end-line="45" selection-end-column="20" />
+            <state vertical-scroll-proportion="0.30625">
+              <caret line="258" column="40" selection-start-line="258" selection-start-column="40" selection-end-line="258" selection-end-column="40" />
               <folding>
                 <element signature="n#!!doc" expanded="true" />
-                <element signature="n#!!doc;n#replaceSelection#0" expanded="false" />
-                <element signature="n#!!block;n#replaceSelection#0" expanded="false" />
-                <marker date="1427120980000" expanded="true" signature="3309:3336" placeholder="..." />
+                <marker date="1427295973000" expanded="true" signature="3218:3245" placeholder="..." />
               </folding>
             </state>
           </provider>
@@ -44,7 +53,7 @@
         <entry file="file://$PROJECT_DIR$/play-skiir-api/conf/routes">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="13" column="0" selection-start-line="13" selection-start-column="0" selection-end-line="13" selection-end-column="0" />
+              <caret line="14" column="0" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -54,16 +63,16 @@
         <entry file="file://$PROJECT_DIR$/play-skiir-api/app/controllers/API.scala">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="54" column="37" selection-start-line="54" selection-start-column="27" selection-end-line="54" selection-end-column="37" />
+              <caret line="65" column="37" selection-start-line="65" selection-start-column="37" selection-end-line="65" selection-end-column="37" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="style.css" pinned="false" current-in-tab="true">
+      <file leaf-file-name="style.css" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/webplugin/style.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.34545454">
+            <state vertical-scroll-proportion="0.0">
               <caret line="23" column="0" selection-start-line="23" selection-start-column="0" selection-end-line="23" selection-end-column="0" />
               <folding />
             </state>
@@ -78,8 +87,8 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/webplugin/content_script.js" />
         <option value="$PROJECT_DIR$/webplugin/style.css" />
+        <option value="$PROJECT_DIR$/webplugin/content_script.js" />
       </list>
     </option>
   </component>
@@ -163,6 +172,8 @@
     <property name="options.lastSelected" value="configurable.group.project" />
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="options.splitter.details.proportions" value="0.2" />
+    <property name="settings.editor.selected.configurable" value="File.Encoding" />
+    <property name="settings.editor.splitter.proportion" value="0.2" />
   </component>
   <component name="RunManager">
     <configuration default="true" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application">
@@ -263,9 +274,7 @@
           <caret line="45" column="20" selection-start-line="45" selection-start-column="8" selection-end-line="45" selection-end-column="20" />
           <folding>
             <element signature="n#!!doc" expanded="true" />
-            <element signature="n#!!doc;n#replaceSelection#0" expanded="false" />
-            <element signature="n#!!block;n#replaceSelection#0" expanded="false" />
-            <marker date="1427120980000" expanded="true" signature="3309:3336" placeholder="..." />
+            <marker date="1427295973000" expanded="true" signature="3218:3245" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -300,9 +309,7 @@
           <caret line="45" column="20" selection-start-line="45" selection-start-column="8" selection-end-line="45" selection-end-column="20" />
           <folding>
             <element signature="n#!!doc" expanded="true" />
-            <element signature="n#!!doc;n#replaceSelection#0" expanded="false" />
-            <element signature="n#!!block;n#replaceSelection#0" expanded="false" />
-            <marker date="1427120980000" expanded="true" signature="3309:3336" placeholder="..." />
+            <marker date="1427295973000" expanded="true" signature="3218:3245" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -348,7 +355,7 @@
     <entry file="file://$PROJECT_DIR$/play-skiir-api/conf/routes">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="13" column="0" selection-start-line="13" selection-start-column="0" selection-end-line="13" selection-end-column="0" />
+          <caret line="14" column="0" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -356,29 +363,27 @@
     <entry file="file://$PROJECT_DIR$/play-skiir-api/app/controllers/API.scala">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="54" column="37" selection-start-line="54" selection-start-column="27" selection-end-line="54" selection-end-column="37" />
+          <caret line="65" column="37" selection-start-line="65" selection-start-column="37" selection-end-line="65" selection-end-column="37" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/webplugin/style.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="23" column="0" selection-start-line="23" selection-start-column="0" selection-end-line="23" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/webplugin/content_script.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="45" column="20" selection-start-line="45" selection-start-column="8" selection-end-line="45" selection-end-column="20" />
+        <state vertical-scroll-proportion="0.30625">
+          <caret line="258" column="40" selection-start-line="258" selection-start-column="40" selection-end-line="258" selection-end-column="40" />
           <folding>
             <element signature="n#!!doc" expanded="true" />
-            <element signature="n#!!doc;n#replaceSelection#0" expanded="false" />
-            <element signature="n#!!block;n#replaceSelection#0" expanded="false" />
-            <marker date="1427120980000" expanded="true" signature="3309:3336" placeholder="..." />
+            <marker date="1427295973000" expanded="true" signature="3218:3245" placeholder="..." />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/webplugin/style.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.34545454">
-          <caret line="23" column="0" selection-start-line="23" selection-start-column="0" selection-end-line="23" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
