@@ -43,9 +43,10 @@ var explanationRequests = [], explanations = [];
 
 var dialogHtml =
     '<h3></h3>'+
+    '<p id="context"></p>'+
     '<textarea style="width: 426px; height: 87px;">write an explanation here</textarea>'+
     'Pick your reference'+
-    '<iframe style="width:426px;" src="http://en.wikipedia.org/wiki/Greece"></iframe> </br></br>'+
+    '<div>DbPedia assistance</div>'+
     '<button id="done">Done</button>'+
     '<button id="close">Cancel</button>';
 
@@ -56,6 +57,11 @@ var dialog = document.createElement('dialog');
 
     // fetch the explanationRequests and explanations
     explanationRequests = testExReqs;
+
+    getRequest('http://skiir.com/requests', function(results) {
+       explanationRequests = results;
+    });
+
     explanations = testExs;
 
     //insert dialog
@@ -117,12 +123,15 @@ function updateExplanationRequest(exReq) {
 function openDialog(exReq) {
     dialog.showModal();
     dialog.querySelector('h3').textContent = exReq.phrase;
+    dialog.querySelector('p#context').textContent = exReq.original;
 
     dialog.querySelector('#done').onclick = function(e) {
         exReq.explanation = dialog.querySelector('textarea').value;
         updateExplanationRequest(exReq);
 
-        // TODO: send update to serve
+        // TODO: send update to server
+        postRequest('http://skiir.com/requests', exReq);
+
         console.info("Sending annotation to server", exReq.explanation);
 
         explanationRequests.filter(function (el) {return el.id !== exReq.id});
@@ -160,6 +169,9 @@ function getSelectionParentElement() {
     }
     return parentEl;
 }
+
+
+
 
 /**
  * Replace current selection with HTML
@@ -217,9 +229,18 @@ function replaceSelection(html, selectInserted) {
 
 function ajax(url,method,callback,body) {
     var call = new XMLHttpRequest();
-    call.onreadystatechange=function() {if(call.readyState==4) callback(call.responseText);}
+    call.onreadystatechange = function() {
+        if(call.readyState == 4) callback(call.responseText);
+    };
     call.open(method,url,true);
     call.send(body || null);
+}
+
+function getRequest(url, callback) {
+    ajax(url, 'GET', callback);
+}
+function postRequest(url, body, callback) {
+    ajax(url, 'POST', callback, body);
 }
 
 // Message handler (from background.js)
@@ -230,21 +251,25 @@ chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
         var exReq = req.details;
 
         exReq.paragraph = getSelectionParentElement();
+        exReq.original = exReq.paragraph.textContent;
 
         addExplanationRequest(exReq);
 
-        //TODO: send data to popup.js (through background.js?)
-        ajax("http://localhost:9000/requests", "POST", function(){
+        postRequest("http://localhost:9000/requests", toJson(exReq), function() {
             // TODO: give feedback to user (checkmark overlay/anything)
             console.log("Saved at server");
-        }, JSON.stringify({
-            "article_url": window.location.href,
-            "article_title": document.title,
-            "article_text": document.body.innerText,
-            "request_text": exReq.phrase,
-            "request_text_surroundings": exReq.paragraph.innerText
-        }));
+        });
 
         console.debug("Send annotation request to server", exReq);
     }
 });
+
+function toJson(exReq) {
+    return JSON.stringify({
+        "article_url": window.location.href,
+        "article_title": document.title,
+        "article_text": document.body.innerText,
+        "request_text": exReq.phrase,
+        "request_text_surroundings": exReq.paragraph.innerText
+    });
+}
