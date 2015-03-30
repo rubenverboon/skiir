@@ -25,9 +25,17 @@ Now the API will be running at [http://localhost:9000](http://localhost:9000). A
 
 ````
 # Basic API
-GET     /requests               Get all annotation requests
-GET     /articles               Get all articles we have in the database
-GET     /articles/:id           Get specific article, plus all annotations and annotation requests in database
+GET     /requests                             Get all annotation requests
+POST    /requests                             Add new request; you need to provide article_url
+POST    /requests/:rid/annotations            Add new annotation
+POST    /requests/:rid/annotations/:aid/vote  Increase vote for annotation
+
+GET     /articles                  Get all articles we have in the database
+GET     /articles/:id              Get single article, by id. Plus all annotations and annotation requests in database
+GET     /articles/single?url=:url  Get single article, by url. Plus all of the above.
+POST    /articles/:id/requests     Add new request, to this specific article
+
 # Semantic tools
 GET     /explain/:text          Get DbPedia entries for all (AlchemyAPI) concepts in the given text
+GET     /crawl?url=:url         Scrape URL and record Entities and Concepts from Alchemy
 ````
