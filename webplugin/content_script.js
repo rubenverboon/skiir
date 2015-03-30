@@ -36,6 +36,12 @@ var testExs = [
   }
 ];
 
+$.extend($.expr[':'], {
+    containsEscaped: function (el, index, m) {  
+        var s = unescape(m[3]).replace(/[\s\n]+/g," ").trim();
+        return $(el).text().replace(/[\s\n]+/g," ").indexOf(s) >= 0;
+    }  
+});
 
 var explanationRequests = [], explanations = [];
 
@@ -73,38 +79,53 @@ var dialog = document.createElement('dialog');
   };
   document.body.insertBefore(dialog, document.body.firstChild);
 
-  // update de DOM met buttons en explanation components
-  // TODO: Bug! only 1 request per paragraph!
-  for (var idx in explanationRequests) {
-    var exReq = explanationRequests[idx];
-
-    // search page for explanationRequest.original
-    exReq.paragraph = getParagraphOfText(exReq.original);
-
-    // replace with button
-    addExplanationRequest(exReq);
-  }
-
-  for (var idx in explanations) {
-    var explanation = explanations[idx];
-
-    explanation.paragraph = getParagraphOfText(explanation.original);
-
-    addExplanation(explanation);
-  }
+  $.ajax({
+    url: "http://localhost:9000/articles/single",
+    method: "GET",
+    data: { "url": window.location.href }
+  }).done(function(article){
+    show(article.requests, article.annotations);
+  }).fail(function(){
+    console.log("Request failed", arguments);
+  });
+  
+  show(explanationRequests, explanations);
 
 })();
 
+function show(requests, explanations){
+  // update de DOM met buttons en explanation components
+  // TODO: Bug! only 1 request per paragraph!
+  requests.forEach(function(r){
+    // search page for explanationRequest.original
+    r.paragraph = getParagraphOfText(r.text_surroundings || r.original, r.text || r.phrase);
+    r.phrase = r.text || r.phrase;
+    // replace with button
+    addExplanationRequest(r);
+  });
+
+  explanations.forEach(function(e){
+    if(e.request_id){
+      var req = requests.filter(function(r){ return r.id == e.request_id })[0];
+      e.original = req && req.text_surroundings;
+      e.phrase = r.text;
+    }
+    e.paragraph = getParagraphOfText(e.original);
+    addExplanation(e);
+  });
+}
 
 function addExplanation(ex) {
 
   var span = document.createElement('span');
+  var button = document.createElement('button');
+  button.textContent = ex.phrase;
+
   span.className = 'skiir-explanation';
   var links = '';
   if(ex.links) {
     links += '<div class="links">';
     for(var key in ex.links) {
-      //console.log(key+ex.links[key]);
       links += '<a href="'+ex.links[key]+'">['+key+']</a>';
     }
     links += '</div>';
@@ -113,8 +134,9 @@ function addExplanation(ex) {
   '<ul><li><a href="#">Improve</a></li><li><a href="#">Downvote</a></li></ul></div>';
 
 
-  span.innerHTML = ex.phrase + '<div>' + menu + '<p>' + ex.explanation + '</p>' + links + '</div>';
-  span.onclick = function(e) {toggleShow(span);};
+  span.innerHTML = '<div>' + menu + '<p>' + ex.explanation + '</p>' + links + '</div>';
+  span.insertBefore(button, span.firstChild);
+  button.onclick = function(e) {toggleShow(span);};
 
   try {
 
@@ -130,7 +152,7 @@ function addExplanation(ex) {
   } catch(err){
     console.log(err);
   }
-  span.querySelector('button').onclick = function() {
+  span.querySelector('.dropdown button').onclick = function() {
     toggleShow(span.querySelector('ul'));
   };
 
@@ -205,17 +227,10 @@ function openDialog(exReq) {
   };
 }
 
-function getParagraphOfText(text) {
-  var elements = document.querySelectorAll(".article-body p");
-
-  for (var i = 0; i < elements.length; i++) {
-    var el = elements[i];
-
-    // TODO: BUG! deze check is niet netjes!!!
-    if (el.textContent.split(' ')[0] == text.split(' ')[0]) {
-      return el;
-    }
-  }
+function getParagraphOfText(surround, text) {
+  var match = $("p:containsEscaped("+escape(surround)+") p:containsEscaped("+escape(text)+")");
+  match = match.size() && match || $("p:containsEscaped("+escape(text)+")");
+  return match.get(0);
 }
 
 function getSelectionParentElement() {
@@ -234,89 +249,6 @@ function getSelectionParentElement() {
   return parentEl;
 }
 
-
-
-
-/**
- * Replace current selection with HTML
- * Kudo's to: http://stackoverflow.com/questions/5393922/javascript-replace-selection-all-browsers
- */
-function replaceSelection(html, selectInserted) {
-  var sel, range, fragment;
-
-  if (typeof window.getSelection != "undefined") {
-    // IE 9 and other non-IE browsers
-    sel = window.getSelection();
-
-    // Test that the Selection object contains at least one Range
-    if (sel.getRangeAt && sel.rangeCount) {
-      // Get the first Range (only Firefox supports more than one)
-      range = window.getSelection().getRangeAt(0);
-      range.deleteContents();
-
-      // Create a DocumentFragment to insert and populate it with HTML
-      // Need to test for the existence of range.createContextualFragment
-      // because it's non-standard and IE 9 does not support it
-      if (typeof html.nodeType != 'undefined') {
-        fragment = document.createDocumentFragment();
-        fragment.appendChild(html);
-      } else if (range.createContextualFragment) {
-        fragment = range.createContextualFragment(html);
-      } else {
-        // In IE 9 we need to use innerHTML of a temporary element
-        var div = document.createElement("div"), child;
-        div.innerHTML = html;
-        fragment = document.createDocumentFragment();
-        while ((child = div.firstChild)) {
-          fragment.appendChild(child);
-        }
-      }
-      var firstInsertedNode = fragment.firstChild;
-      var lastInsertedNode = fragment.lastChild;
-      range.insertNode(fragment);
-      if (selectInserted) {
-        if (firstInsertedNode) {
-          range.setStartBefore(firstInsertedNode);
-          range.setEndAfter(lastInsertedNode);
-        }
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
-    }
-  } else if (document.selection && document.selection.type != "Control") {
-    // IE 8 and below
-    range = document.selection.createRange();
-    range.pasteHTML(html && html.innerHTML || html);
-  }
-}
-
-function ajax(url, method, body, callback) {
-    var call = new XMLHttpRequest();
-    call.onreadystatechange = function() {
-        if(call.readyState == 4) callback(call.responseText);
-    };
-    call.open(method,url,true);
-
-
-    var headers = {
-        "Content-Type": "application/json"
-    };
-
-
-    for(var key in ( headers || {})){
-        call.setRequestHeader(key, headers[key]);
-    }
-
-    call.send(body || null);
-}
-
-function getRequest(url, callback) {
-    ajax(url, 'GET', null, callback);
-}
-function postRequest(url, body, callback) {
-    ajax(url, 'POST', callback, body);
-}
-
 // Message handler (from background.js)
 chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
 
@@ -327,21 +259,26 @@ chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
         exReq.paragraph = getSelectionParentElement();
         exReq.original = exReq.paragraph.textContent;
 
-        postRequest("http://localhost:9000/requests", toJson(exReq), function() {
-            // TODO: give feedback to user (checkmark overlay/anything)
-            console.log("Saved at server");
-        });
 
-        console.debug("Send annotation request to server", exReq);
-    }
-});
-
-function toJson(exReq) {
-    return JSON.stringify({
+    //TODO: send data to popup.js (through background.js?)
+    $.ajax({
+      url: "http://localhost:9000/requests",
+      method: "POST",
+      data: {
         "article_url": window.location.href,
         "article_title": document.title,
         "article_text": document.body.innerText,
         "request_text": exReq.phrase,
         "request_text_surroundings": exReq.paragraph.innerText
+
+      },
+      complete: function(){
+        // TODO: give feedback to user (checkmark overlay/anything)
+        console.log("Saved at server");
+      }
     });
-}
+
+    console.debug("Send annotation request to server", exReq);
+    sendResponse({farewell: "goodbye"});
+  }
+});
