@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var items = [1, 2, 3];
 
     var ul = document.querySelector('ul');
+    if(ul)
     for (var idx in items) {
         var item = items[idx];
         ul.innerHTML += '<li>' + item + '</li>';

@@ -42,7 +42,10 @@ object API extends Controller {
   }
 
   def singleArticle() = Action { request =>
-    val params = request.queryString.mapValues(_.headOption)
+    val params = request.queryString.mapValues(_.headOption).map {
+      case ("url", Some(u)) => "url" -> Some(u.take(articleUrlLength))
+      case t => t
+    }
     val resultList = getArticles(params)
     try
       resultList.singleOption.map(_ \ "id").flatMap(_.asOpt[Long]).map(id =>
