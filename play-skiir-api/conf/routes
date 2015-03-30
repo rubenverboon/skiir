@@ -9,9 +9,11 @@ GET        /                    controllers.Application.index
 
 GET        /requests            controllers.API.requests
 POST       /requests            controllers.API.addRequest
+POST       /requests/:rid/annotations    controllers.API.addAnnotation(rid: Long)
 
 GET        /articles            controllers.API.articles
 GET        /articles/single     controllers.API.singleArticle
+
 
 GET        /explain/:text       controllers.Crawler.explain(text: String)
 
