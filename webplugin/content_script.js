@@ -20,13 +20,13 @@ var testExs = [
     original: 'Tsipras has also stepped up calls for war reparations from Germany for the Nazi occupation during World War II and Greek Finance Minister Yanis Varoufakis has been locked in a war of words with his German counterpart Wolfgang Schaeuble. Last week, the Greek government officially complained about Schaeuble’s conduct, to which Schaeuble replied that the whole matter was “absurd.”',
     phrase: 'Tsipras has also stepped up calls for war reparations',
     explanation: 'Greece’s Prime Minister Alexis Tsipras is to visit Germany’s Angela Merkel head-to-head for the first time next Monday. The talks, scheduled for Monday, will try to repair relations that have deteriorated badly in the last few days, with Tsipras reviving claims for Nazi-era war damages before parliament, and his Justice Minister preparing a law that would allow the seizure of German state property in Greece.'
-
   },
   {
     id: 2,
     original: '“They’ve got a lot of hubris and arrogance, being in the situation they’re in and making all these demands,” said Mueller, 49, waiting for fares near the Brandenburg Gate. “Maybe it’s better for Greece to just leave the euro.”',
     phrase: "a lot of hubris and arrogance",
-    explanation: "52% of Germans want Greece out of Euro, tire of its “arrogance”"
+    explanation: "52% of Germans want Greece out of Euro, tire of its “arrogance”",
+    links: ['http://www.bloomberg.com/news/articles/2015-03-30/greek-markets-show-all-at-risk-should-mistake-trigger-a-default']
   },
   {
     id: 3,
@@ -41,12 +41,19 @@ var explanationRequests = [], explanations = [];
 
 var dialogHtml =
     '<h3></h3>'+
+    '<button id="close">&#x2716;</button>'+
     '<p id="context"></p>'+
-    '<textarea style="width: 426px; height: 87px;">write an explanation here</textarea>'+
-    'Pick your reference'+
-    '<div>DbPedia assistance</div>'+
+    '<textarea placeholder="write an explanation here"></textarea>'+
     '<button id="done">Done</button>'+
-    '<button id="close">Cancel</button>';
+    '<div id="snippets"></div>'
+    ;
+
+var dummySnippets =
+    '<div>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam lobortis leo in cursus vehicula. Nam eget diam commodo, aliquam ante nec, imperdiet leo. Aliquam vestibulum turpis et orci laoreet cursus. Sed purus ipsum, venenatis convallis mi ac, finibus sagittis risus. Sed lobortis nisl in sapien aliquam, eu ullamcorper tellus condimentum. Vestibulum et urna ut nulla commodo sollicitudin ac nec mauris. Vestibulum sodales, neque vitae blandit finibus, sem nibh suscipit odio, non rhoncus nibh nulla sagittis sapien. Fusce pulvinar purus at ante scelerisque, in semper nibh venenatis. Vestibulum sed massa id massa blandit ornare eget vel elit. Mauris maximus feugiat augue non accumsan. Pellentesque porta at ligula ac mollis.<label><input type="checkbox">add link</label></div>'+
+    '<div>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam lobortis leo in cursus vehicula. Nam eget diam commodo, aliquam ante nec, imperdiet leo. Aliquam vestibulum turpis et orci laoreet cursus. Sed purus ipsum, venenatis convallis mi ac, finibus sagittis risus. Sed lobortis nisl in sapien aliquam, eu ullamcorper tellus condimentum. Vestibulum et urna ut nulla commodo sollicitudin ac nec mauris. Vestibulum sodales, neque vitae blandit finibus, sem nibh suscipit odio, non rhoncus nibh nulla sagittis sapien. Fusce pulvinar purus at ante scelerisque, in semper nibh venenatis. Vestibulum sed massa id massa blandit ornare eget vel elit. Mauris maximus feugiat augue non accumsan. Pellentesque porta at ligula ac mollis.<label><input type="checkbox">add link</label></div>'+
+    '<div>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam lobortis leo in cursus vehicula. Nam eget diam commodo, aliquam ante nec, imperdiet leo. Aliquam vestibulum turpis et orci laoreet cursus. Sed purus ipsum, venenatis convallis mi ac, finibus sagittis risus. Sed lobortis nisl in sapien aliquam, eu ullamcorper tellus condimentum. Vestibulum et urna ut nulla commodo sollicitudin ac nec mauris. Vestibulum sodales, neque vitae blandit finibus, sem nibh suscipit odio, non rhoncus nibh nulla sagittis sapien. Fusce pulvinar purus at ante scelerisque, in semper nibh venenatis. Vestibulum sed massa id massa blandit ornare eget vel elit. Mauris maximus feugiat augue non accumsan. Pellentesque porta at ligula ac mollis.<label><input type="checkbox">add link</label></div>'+
+    '<div>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam lobortis leo in cursus vehicula. Nam eget diam commodo, aliquam ante nec, imperdiet leo. Aliquam vestibulum turpis et orci laoreet cursus. Sed purus ipsum, venenatis convallis mi ac, finibus sagittis risus. Sed lobortis nisl in sapien aliquam, eu ullamcorper tellus condimentum. Vestibulum et urna ut nulla commodo sollicitudin ac nec mauris. Vestibulum sodales, neque vitae blandit finibus, sem nibh suscipit odio, non rhoncus nibh nulla sagittis sapien. Fusce pulvinar purus at ante scelerisque, in semper nibh venenatis. Vestibulum sed massa id massa blandit ornare eget vel elit. Mauris maximus feugiat augue non accumsan. Pellentesque porta at ligula ac mollis.<label><input type="checkbox">add link</label></div>'
+;
 
 var dialog = document.createElement('dialog');
 
@@ -90,12 +97,52 @@ var dialog = document.createElement('dialog');
 
 
 function addExplanation(ex) {
-  var html = '<span class="skiir-explanation">' + ex.phrase + '<div>' + ex.explanation + '</div></span>';
-  //if(!exReq.paragraph) return console.warn("Are you running a test?");
+
+  var span = document.createElement('span');
+  span.className = 'skiir-explanation';
+  var links = '';
+  if(ex.links) {
+    links += '<div class="links">';
+    for(var key in ex.links) {
+      //console.log(key+ex.links[key]);
+      links += '<a href="'+ex.links[key]+'">['+key+']</a>';
+    }
+    links += '</div>';
+  }
+  var menu = '<div class="dropdown"><button>&#x2630;</button>'+
+  '<ul><li><a href="#">Improve</a></li><li><a href="#">Downvote</a></li></ul></div>';
+
+
+  span.innerHTML = ex.phrase + '<div>' + menu + '<p>' + ex.explanation + '</p>' + links + '</div>';
+  span.onclick = function(e) {toggleShow(span);};
+
   try {
-    ex.paragraph.innerHTML = ex.paragraph.innerHTML.replace(ex.phrase, html);
+
+    var paragraph = ex.paragraph;
+    var text = paragraph.innerHTML.split(ex.phrase);
+
+    while (paragraph.firstChild) paragraph.removeChild(paragraph.firstChild);
+
+    paragraph.appendChild(document.createTextNode(text[0]));
+    paragraph.appendChild(span);
+    paragraph.appendChild(document.createTextNode(text[1]));
+
   } catch(err){
     console.log(err);
+  }
+  span.querySelector('button').onclick = function() {
+    toggleShow(span.querySelector('ul'));
+  };
+
+  ex.span = span;
+
+}
+
+function toggleShow(span) {
+  if(span.classList.contains('show')) {
+    span.classList.remove('show');
+  } else {
+    span.classList.add('show');
   }
 }
 
@@ -103,32 +150,42 @@ function addExplanationRequest(exReq) {
   var button = document.createElement('button');
   button.className = 'skiir-help';
   button.textContent = exReq.phrase;
-  //if(!exReq.paragraph) return console.warn("Are you running a test?");
-  try {
-    exReq.paragraph.innerHTML = exReq.paragraph.innerHTML.replace(exReq.phrase, button.outerHTML);
+  button.onclick = function() { openDialog(exReq) };
 
-    exReq.paragraph.querySelector('.skiir-help').onclick = function (e) {
-      openDialog(exReq);
-    };
+  try {
+
+    var paragraph = exReq.paragraph;
+    var text = paragraph.innerHTML.split(exReq.phrase);
+
+    while (paragraph.firstChild) paragraph.removeChild(paragraph.firstChild);
+
+    paragraph.appendChild(document.createTextNode(text[0]));
+    paragraph.appendChild(button);
+    paragraph.appendChild(document.createTextNode(text[1]));
+
   }
   catch(err){
     console.log(err);
   }
+  exReq.button = button;
 }
 
 function updateExplanationRequest(exReq) {
-  var button = exReq.paragraph.querySelector('.skiir-help');
-  //if(!exReq.paragraph) return console.warn("Are you running a test?");
-  exReq.paragraph.innerHTML = exReq.paragraph.innerHTML.replace(button.outerHTML, exReq.phrase);
-  addExplanation(exReq);
 
+  exReq.paragraph.innerHTML = exReq.paragraph.innerHTML.replace(exReq.button.outerHTML, exReq.phrase);
+
+  delete exReq.button;
+
+  addExplanation(exReq);
 }
 
 function openDialog(exReq) {
 
+    var highlight = '<span>'+exReq.phrase+'</span>';
     dialog.showModal();
     dialog.querySelector('h3').textContent = exReq.phrase;
-    dialog.querySelector('p#context').textContent = exReq.original;
+    dialog.querySelector('p#context').innerHTML = exReq.original.replace(exReq.phrase, highlight);
+    dialog.querySelector('div#snippets').innerHTML = dummySnippets;
 
   dialog.querySelector('#done').onclick = function (e) {
     exReq.explanation = dialog.querySelector('textarea').value;
