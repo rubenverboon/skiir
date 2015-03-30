@@ -20,7 +20,7 @@ import semanticate.SemanticServiceImpl
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
-import scala.util.{Try, Success, Failure}
+import scala.util.{Failure, Success, Try}
 
 object Crawler extends Controller {
 
@@ -48,64 +48,85 @@ object Crawler extends Controller {
 
   def crawl(urlOpt: String) = Action.async { req =>
     val url = Some(urlOpt).filterNot(_.isEmpty).orElse(req.queryString.get("url").map(_.head)).getOrElse("sjaars...")
+    scrapeArticle(url).map(_ => Ok(""))
+  }
 
-    val result = cacheRead(md5(url)+".json").fold(
-      WS.url("http://access.alchemyapi.com/calls/url/URLGetRankedNamedEntities").withQueryString(
-        "url" -> url,
-        "apikey" -> alchemyKey,
-        "outputMode" -> "json",
-        "showSourceText" -> "1"
-      ).get().map(r => {
-        cacheWrite(md5(url)+".json", r.json)
-        r.json
-      })
-    )(json => Future.successful(json))
+  /**
+   * Scrape the article
+   * @param url
+   * @return article id
+   */
+  def scrapeArticle(url: String) : Future[Long] = {
+    val dbUrl = url.take(API.articleUrlLength)
 
-    val r = result.map(json => DB.withConnection { implicit c =>
-      val dbUrl = (json \ "url").as[String].take(API.articleUrlLength)
-
-      // Get or insert article
-      val article_id = SQL("SELECT article_id FROM article WHERE article_url LIKE {url}").on('url -> dbUrl).as(scalar[Long].singleOpt).orElse {
-        // Insert the article
-        SQL("INSERT INTO article (article_url, article_title, article_text, article_date, date_added) VALUES ({url}, {title}, {text}, {article_date}, {date_added})").on(
-          'url -> dbUrl,
-          'title -> url.split('/').last.replace("-"," ").take(API.articleTitleLength),
-          'text -> (json \ "text").as[String],
-          'article_date ->  LocalDate.parse(url.substring(39,49)).toDateTimeAtStartOfDay.toDate(),
-          'date_added ->    new Date()
-        ).executeInsert[Option[Long]]()
-      }
-
-      // Store entities
-      (json \ "entities").as[List[ArticleEntity]].map(ae => {
-        // Find or insert entity
-        val entity_id = SQL("SELECT entity_id FROM entity WHERE (entity_name ILIKE {name} AND type ILIKE {type}) OR dbpedia_url LIKE {dbpedia}").on(
-          'name -> ae.text,
-          'dbpedia -> ae.dbpedia,
-          'type -> ae.`type`
-        ).as(scalar[Long].singleOpt).orElse(
-          // Not found, so insert
-          SQL"""INSERT INTO
-                entity (entity_name,dbpedia_url,type) VALUES
-                (${ae.entity_name},${ae.dbpedia},${ae.`type`})""".executeInsert[Option[Long]]()
-        )
-
-        // Insert links
-        Try(
-          SQL"""INSERT INTO entity_article
-              (article_id,entity_id,relevance,count,text) VALUES
-              ($article_id, $entity_id,${ae.relevance},${ae.count},${ae.text})""".executeInsert[Option[Long]]()
-        )
-      })
-    })
-
-    r.onFailure {
-      case e =>
-        println(e)
-        e.printStackTrace()
+    // Check if we already scraped this article
+    val existing = DB.withConnection { implicit c =>
+      SQL("SELECT article_id FROM article WHERE article_url LIKE {url}").on('url -> dbUrl).as(scalar[Long].singleOpt)
     }
 
-    result.map(Ok(_))
+    // Else scrape
+    existing.map(Future.successful).getOrElse {
+      // Load Entities
+      val entities = cacheRead(md5(url) + ".json").fold(
+        WS.url("http://access.alchemyapi.com/calls/url/URLGetRankedNamedEntities").withQueryString(
+          "url" -> url,
+          "apikey" -> alchemyKey,
+          "outputMode" -> "json",
+          "showSourceText" -> "1"
+        ).get().map(r => {
+          cacheWrite(md5(url) + ".json", r.json)
+          r.json
+        })
+      )(json => Future.successful(json))
+
+      // Report failure
+      entities.onFailure {
+        case e =>
+          println(e)
+          e.printStackTrace()
+      }
+
+      val DateRegex = """.*(\d{4}).(\d{2}).(\d{2}).*""".r
+
+      // Store all Entities found
+      entities.map { json => DB.withConnection { implicit c =>
+        // Insert article
+        val article_id = SQL("INSERT INTO article (article_url, article_title, article_text, article_date, date_added) VALUES ({url}, {title}, {text}, {article_date}, {date_added})").on(
+          'url -> dbUrl,
+          'title -> url.split('/').last.replace("-", " ").take(API.articleTitleLength),
+          'text -> (json \ "text").as[String],
+          'article_date -> (url match {
+            case DateRegex(y,m,d) => Some(LocalDate.parse(s"$y-$m-$d").toDate)
+            case _ => Option.empty[Date]
+          }),
+          'date_added -> new Date()
+        ).executeInsert[Option[Long]]().get
+
+        // Store entities
+        (json \ "entities").as[List[ArticleEntity]].map(ae => {
+          // Find or insert entity
+          val entity_id = SQL("SELECT entity_id FROM entity WHERE (entity_name ILIKE {name} AND type ILIKE {type}) OR dbpedia_url LIKE {dbpedia}").on(
+            'name -> ae.text,
+            'dbpedia -> ae.dbpedia,
+            'type -> ae.`type`
+          ).as(scalar[Long].singleOpt).orElse(
+              // Not found, so insert
+              SQL"""INSERT INTO
+                entity (entity_name,dbpedia_url,type) VALUES
+                (${ae.entity_name},${ae.dbpedia},${ae.`type`})""".executeInsert[Option[Long]]()
+            )
+
+          // Insert links
+          Try(
+            SQL"""INSERT INTO entity_article
+              (article_id,entity_id,relevance,count,text) VALUES
+              ($article_id, $entity_id,${ae.relevance},${ae.count},${ae.text})""".executeInsert[Option[Long]]()
+          )
+        })
+
+        article_id
+      }}
+    }
   }
 
   def cacheRead(file: String): Option[JsValue] = {

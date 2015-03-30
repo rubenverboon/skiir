@@ -14,10 +14,15 @@
             <li>start browsing news websites!</li>
         </ul>
         <pre><code># Basic API
-GET     /requests               Get all annotation requests
+GET     /requests                     Get all annotation requests
+POST    /requests                     Add new request
+POST    /requests/:rid/annotations    Add new annotation
+
 GET     /articles               Get all articles we have in the database
 GET     /articles/single        Get single article, plus all annotations and annotation requests in database, filtered by GET parameters &lt;id&gt; or &lt;url&gt;
+
 # Semantic tools
-GET     /explain/:text          Get DbPedia entries for all (AlchemyAPI) concepts in the given text</code></pre>
+GET     /explain/:text          Get DbPedia entries for all (AlchemyAPI) concepts in the given text
+GET     /crawl?url=:url         Scrape URL and record Entities and Concepts from Alchemy</code></pre>
     </article>
 }
