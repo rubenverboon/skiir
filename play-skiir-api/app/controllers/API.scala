@@ -12,8 +12,8 @@ import anorm.SqlParser._
 
 object API extends Controller {
 
-  val articleUrlLength = 100
-  val articleTitleLength = 40
+  val articleUrlLength = 200
+  val articleTitleLength = 100
 
   def articles = Action {
     Ok(JsArray(getArticles()))
