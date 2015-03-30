@@ -70,7 +70,10 @@ object API extends Controller {
         "article_id" -> row[Long]("article_id"),
         "text" -> row[String]("request_text"),
         "text_surroundings" -> row[String]("request_text_surroundings"),
-        "date_asked" -> row[Option[Date]]("date_asked")
+        "date_asked" -> row[Option[Date]]("date_asked"),
+        "links" -> JsArray(Seq(
+          Json.obj("rel" -> "annotate", "href" -> controllers.routes.API.addAnnotation(row[Long]("request_id")).toString)
+        ))
       )).toList
       JsArray(rows)
     }
@@ -88,7 +91,8 @@ object API extends Controller {
         "article_id" -> row[Long]("article_id"),
         "annotation_answer" -> row[Option[String]]("annotation_answer"),
         "date_answered" -> row[Option[Date]]("date_answered"),
-        "votes" -> row[Long]("votes")
+        "votes" -> row[Long]("votes"),
+        "references" -> Json.parse(row[String]("refs"))
       )).toList
     }
   }
@@ -107,11 +111,11 @@ object API extends Controller {
         SQL("SELECT article_id FROM article WHERE article_url LIKE {url}").on('url -> url).as(scalar[Long].singleOpt).orElse {
           // Insert the article
           SQL("INSERT INTO article (article_url, article_title, article_text, article_date, date_added) VALUES ({url}, {title}, {text}, {article_date}, {date_added})").on(
-            'url ->   urlOpt.get,
+            'url -> urlOpt.get,
             'title -> title.get,
-            'text ->  (json \ "article_text").asOpt[String].get,
-            'article_date ->  (json \ "article_date").asOpt[Date],
-            'date_added ->    new Date()
+            'text -> (json \ "article_text").asOpt[String].get,
+            'article_date -> (json \ "article_date").asOpt[Date],
+            'date_added -> new Date()
           ).executeInsert[Option[Long]]()
         }
       }))
@@ -124,12 +128,26 @@ object API extends Controller {
             (article_id, request_text, request_text_surroundings, date_asked)
             VALUES ($aid,$text,$surround,${new Date})""".executeInsert[Option[Long]]()
           id match {
-            case Some(req) => Redirect(routes.API.singleArticle()+s"?id=$aid&req_id=$req")
+            case Some(req) => Redirect(routes.API.singleArticle() + s"?id=$aid&req_id=$req")
             case _ => BadRequest("Something went wrong while inserting request")
           }
         case _ => BadRequest("Provide the fields article_id, request_text, request_text_surroundings. Instead of giving an article_id an article can be directly looked up/created by providing article_url, article_text and article_date.")
       }
     }.getOrElse(BadRequest("Expecting Json data in request body"))
+  }}
+
+  def addAnnotation(rid: Long) = Action { request => DB.withConnection { implicit c =>
+    request.body.asJson.map { json =>
+      val id = SQL("INSERT INTO annotation " +
+        "(request_id, article_id, annotation_answer, date_answered, refs) VALUES " +
+        "({rid}, (SELECT article_id FROM request WHERE request_id = {rid}), {expl}, {date}, {refs})").on(
+          'rid -> rid,
+          'expl -> (json \ "explaination").as[String],
+          'date -> new Date(),
+          'refs -> (json \ "references").toString
+        ).executeInsert[Option[Long]]()
+    }
+    Ok("")
   }}
 
   implicit class SingleOptionList[T](val list: List[T]) {

@@ -79,7 +79,7 @@ object Crawler extends Controller {
       // Store entities
       (json \ "entities").as[List[ArticleEntity]].map(ae => {
         // Find or insert entity
-        val entity_id = SQL("SELECT entity_id FROM entity WHERE (entity_name LIKE {name} AND type LIKE {type}) OR dbpedia_url LIKE {dbpedia}").on(
+        val entity_id = SQL("SELECT entity_id FROM entity WHERE (entity_name ILIKE {name} AND type ILIKE {type}) OR dbpedia_url LIKE {dbpedia}").on(
           'name -> ae.text,
           'dbpedia -> ae.dbpedia,
           'type -> ae.`type`
