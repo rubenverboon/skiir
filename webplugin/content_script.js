@@ -99,12 +99,14 @@ var dialog = document.createElement('dialog');
 function addExplanation(ex) {
 
   var span = document.createElement('span');
+  var button = document.createElement('button');
+  button.textContent = ex.phrase;
+
   span.className = 'skiir-explanation';
   var links = '';
   if(ex.links) {
     links += '<div class="links">';
     for(var key in ex.links) {
-      //console.log(key+ex.links[key]);
       links += '<a href="'+ex.links[key]+'">['+key+']</a>';
     }
     links += '</div>';
@@ -113,8 +115,9 @@ function addExplanation(ex) {
   '<ul><li><a href="#">Improve</a></li><li><a href="#">Downvote</a></li></ul></div>';
 
 
-  span.innerHTML = ex.phrase + '<div>' + menu + '<p>' + ex.explanation + '</p>' + links + '</div>';
-  span.onclick = function(e) {toggleShow(span);};
+  span.innerHTML = '<div>' + menu + '<p>' + ex.explanation + '</p>' + links + '</div>';
+  span.insertBefore(button, span.firstChild);
+  button.onclick = function(e) {toggleShow(span);};
 
   try {
 
@@ -130,7 +133,7 @@ function addExplanation(ex) {
   } catch(err){
     console.log(err);
   }
-  span.querySelector('button').onclick = function() {
+  span.querySelector('.dropdown button').onclick = function() {
     toggleShow(span.querySelector('ul'));
   };
 

@@ -5,9 +5,13 @@
     padding: 0;
 }
 
-.skiir-explanation {
+.skiir-explanation > button {
+    border: none;
+    padding: 0;
+    margin: 0;
     border-bottom: 1px solid green;
     cursor: help;
+    background-color: transparent;
 }
 
 .skiir-explanation>div {
@@ -39,7 +43,11 @@
     border: 1px solid grey;
     width: 100px;
     right: 0;
+}
+.skiir-explanation .dropdown ul li a {
     font-size: smaller;
+    border: none;
+    padding: 5px;
 }
 .skiir-explanation .dropdown ul li:before {
     display: none;
