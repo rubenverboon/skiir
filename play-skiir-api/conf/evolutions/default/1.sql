@@ -4,8 +4,8 @@
 
 CREATE TABLE article (
     article_id bigserial primary key,
-    article_url varchar(100) NOT NULL,
-    article_title varchar(40) NOT NULL,
+    article_url varchar(200) NOT NULL,
+    article_title varchar(100) NOT NULL,
     article_text text NOT NULL,
     article_date timestamp default NULL,
     date_added timestamp default NULL
@@ -30,6 +30,6 @@ CREATE TABLE annotation (
 
 # --- !Downs
 
-DROP TABLE article;
-DROP TABLE request;
 DROP TABLE annotation;
+DROP TABLE request;
+DROP TABLE article;
