@@ -10,34 +10,85 @@
     cursor: help;
 }
 
-.skiir-explanation div {
+.skiir-explanation>div {
     display: none;
     margin: 20px;
     padding: 10px;
     background-color: gainsboro;
+    position: relative;
+}
+.skiir-explanation p {
     font-style: italic;
+    margin: 0 !important;
+}
+.skiir-explanation .dropdown {
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+.skiir-explanation .dropdown button {
+    background-color: transparent;
+    border: 1px solid grey;
+}
+.skiir-explanation .dropdown ul {
+    display: none;
+    position: absolute;
+    margin: 0;
+    list-style-type: none;
+    background-color: white;
+    border: 1px solid grey;
+    width: 100px;
+    right: 0;
+    font-size: smaller;
+}
+.skiir-explanation .dropdown ul li:before {
+    display: none;
+}
+.skiir-explanation .links {
+
+}
+.skiir-explanation .links a {
+    font-size: smaller;
+    color: grey;
+    border: none;
+}
+.skiir-explanation .links a:hover {
+    color: black;
 }
 
-.skiir-explanation:hover div {
+.skiir-explanation:hover>div {
     display: block;
+}
+
+.skiir-explanation.show>div, .skiir-explanation .dropdown ul.show {
+    display: block !important;
 }
 
 #skiir-dialog {
     background: #FFF;
-    width: 500px;
+    width: 1000px;
     text-align: center;
     padding: 1.5em;
     margin: 1em auto;
     border: 0;
-    border-top: 5px solid #69c773;
+    border-top: 5px solid rgba(105, 199, 155, 1);
     box-shadow: 0 2px 10px rgba(0,0,0,0.8);
     z-index: 100;
 
     position: fixed;
     top: 50%;
-    height: 400px;
-    margin-top: -100px;
+    height: 800px;
+    margin-top: -400px;
 
+}
+
+#skiir-dialog #close {
+    position: absolute;
+    right: 0;
+    top: 0;
+    background-color: white;
+    border: 1px solid lightgrey;
+    color: grey;
 }
 
 #skiir-dialog::backdrop {
@@ -49,3 +100,48 @@
     background-color: rgba(0, 0, 0, 0.8);
 }
 
+#skiir-dialog textarea {
+    width: 950px;
+    height: 80px;
+}
+
+#skiir-dialog #done {
+    background-color: rgba(105, 199, 155, 1);
+    border: 1px solid rgba(105, 199, 155, 0.5);
+    color: white;
+    border-radius: 5px;
+    font-weight: bold;
+    padding: 10px 30px;
+}
+#skiir-dialog #done:hover {
+    background-color: rgba(105, 199, 155, 0.5);
+}
+#skiir-dialog #context {
+    height: 63px;
+    overflow-y: scroll;
+}
+#skiir-dialog #context span {
+    font-weight: bold;
+}
+#skiir-dialog #snippets {
+    overflow-y: scroll;
+    margin-top: 10px;
+    height: 500px;
+}
+#skiir-dialog #snippets div {
+    border: 1px solid grey;
+    text-align: left;
+    padding: 10px;
+}
+#skiir-dialog #snippets label {
+    margin-left: 30px;
+    color: rgba(105, 199, 155, 1);
+    font-weight: bold;
+}
+#skiir-dialog #snippets label:hover {
+    cursor: pointer;
+    text-decoration: underline;
+}
+#skiir-dialog #snippets label [type="checkbox"] {
+    margin-right: 10px;
+}

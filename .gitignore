@@ -15,5 +15,4 @@ server.pid
 *.eml
 /dist/
 .cache
-webplugin/.idea/
-info-retrieval/.idea/
+.idea
