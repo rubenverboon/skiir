@@ -25,7 +25,7 @@ SOFTWARE.
 package controllers
 
 import play.api.Logger
-import play.api.mvc.{Filter, RequestHeader, SimpleResult}
+import play.api.mvc.{Filter, RequestHeader, Result}
 
 case class CORSFilter() extends Filter{
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -37,7 +37,7 @@ case class CORSFilter() extends Filter{
       r.headers.get("Access-Control-Request-Method").nonEmpty
     )
 
-  def apply(f: (RequestHeader) => Future[SimpleResult])(request: RequestHeader): Future[SimpleResult] = {
+  def apply(f: (RequestHeader) => Future[Result])(request: RequestHeader): Future[Result] = {
     Logger.trace("[cors] filtering request to add cors")
     if (isPreFlight(request)) {
       Logger.trace("[cors] request is preflight")

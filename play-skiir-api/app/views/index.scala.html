@@ -1,4 +1,4 @@
-@(message: String)
+@(message: String)(implicit requestHeader: RequestHeader)
 
 @main("Welcome to Play") {
     <article>
@@ -14,12 +14,15 @@
             <li>start browsing news websites!</li>
         </ul>
         <pre><code># Basic API
-GET     /requests                     Get all annotation requests
-POST    /requests                     Add new request
-POST    /requests/:rid/annotations    Add new annotation
+GET     /requests                             Get all annotation requests
+POST    /requests                             Add new request; you need to provide article_url
+POST    /requests/:rid/annotations            Add new annotation
+POST    /requests/:rid/annotations/:aid/vote  Increase vote for annotation
 
-GET     /articles               Get all articles we have in the database
-GET     /articles/single        Get single article, plus all annotations and annotation requests in database, filtered by GET parameters &lt;id&gt; or &lt;url&gt;
+GET     /articles                  Get all articles we have in the database
+GET     /articles/:id              Get single article, by id. Plus all annotations and annotation requests in database
+GET     /articles/single?url=:url  Get single article, by url. Plus all of the above.
+POST    /articles/:id/requests     Add new request, to this specific article
 
 # Semantic tools
 GET     /explain/:text          Get DbPedia entries for all (AlchemyAPI) concepts in the given text
