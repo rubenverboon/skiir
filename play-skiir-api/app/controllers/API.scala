@@ -13,8 +13,8 @@ import play.api.mvc._
 
 object API extends Controller {
 
-  val articleUrlLength = 100
-  val articleTitleLength = 40
+  val articleUrlLength = 200
+  val articleTitleLength = 100
 
   def articles = Action { request =>
     val params = request.queryString.mapValues(_.headOption)
