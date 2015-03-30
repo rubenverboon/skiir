@@ -46,7 +46,8 @@ object Crawler extends Controller {
     ).map(Ok(_))
   }
 
-  def crawl(url: String) = Action.async {
+  def crawl(urlOpt: String) = Action.async { req =>
+    val url = Some(urlOpt).filterNot(_.isEmpty).orElse(req.queryString.get("url").map(_.head)).getOrElse("sjaars...")
 
     val result = cacheRead(md5(url)+".json").fold(
       WS.url("http://access.alchemyapi.com/calls/url/URLGetRankedNamedEntities").withQueryString(
