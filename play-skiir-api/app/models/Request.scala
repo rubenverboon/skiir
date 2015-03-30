@@ -18,5 +18,10 @@ case class ArticleEntity(`type`: String,
                          text: String,
                          entity_name: String,
                          dbpedia: Option[String]
-                        )
+                          )
+
+case class ArticleConcept(text: String,
+                          relevance: Float,
+                          dbpedia: Option[String])
+
 

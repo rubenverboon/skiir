@@ -7,7 +7,7 @@ import java.util.Date
 
 import anorm.SqlParser._
 import anorm._
-import models.ArticleEntity
+import models.{ArticleConcept, ArticleEntity}
 import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.db.DB
@@ -49,14 +49,14 @@ object Crawler extends Controller {
   def crawl(urlOpt: String) = Action.async { req =>
     val url = Some(urlOpt).filterNot(_.isEmpty).orElse(req.queryString.get("url").map(_.head)).getOrElse("sjaars...")
 
-    val result = cacheRead(md5(url)+".json").fold(
+    val result = cacheRead(md5(url)+"_entities.json").fold(
       WS.url("http://access.alchemyapi.com/calls/url/URLGetRankedNamedEntities").withQueryString(
         "url" -> url,
         "apikey" -> alchemyKey,
         "outputMode" -> "json",
         "showSourceText" -> "1"
       ).get().map(r => {
-        cacheWrite(md5(url)+".json", r.json)
+        cacheWrite(md5(url)+"_entities.json", r.json)
         r.json
       })
     )(json => Future.successful(json))
@@ -97,6 +97,44 @@ object Crawler extends Controller {
               ($article_id, $entity_id,${ae.relevance},${ae.count},${ae.text})""".executeInsert[Option[Long]]()
         )
       })
+
+      val result2 = cacheRead(md5(url)+"_concepts.json").fold(
+        WS.url("http://access.alchemyapi.com/calls/url/URLGetRankedConcepts").withQueryString(
+          "url" -> url,
+          "apikey" -> alchemyKey,
+          "outputMode" -> "json"
+        ).get().map(r => {
+          cacheWrite(md5(url)+"_concepts.json", r.json)
+          r.json
+        })
+      )(json => Future.successful(json))
+
+      result2.map(json => DB.withConnection{implicit c =>
+        (json \ "concepts").as[List[ArticleConcept]].map(ae => {
+          val entity_id = SQL("SELECT entity_id FROM entity WHERE (entity_name LIKE {name} AND type LIKE {type}) OR dbpedia_url LIKE {dbpedia}").on(
+            'name -> ae.text,
+            'dbpedia -> ae.dbpedia,
+            'type -> "concept"
+          ).as(scalar[Long].singleOpt).orElse(
+              // Not found, so insert
+              SQL"""INSERT INTO
+                entity (entity_name,dbpedia_url,type) VALUES
+                (${ae.text},${ae.dbpedia},'concept')""".executeInsert[Option[Long]]()
+            )
+          // Insert links
+          Try(
+            SQL"""INSERT INTO entity_article
+              (article_id,entity_id,relevance,count,text) VALUES
+              ($article_id, $entity_id,${ae.relevance},1,${ae.text})""".executeInsert[Option[Long]]()
+          )
+        })
+      })
+
+      result2.onFailure {
+        case e =>
+          println(e)
+          e.printStackTrace()
+      }
     })
 
     r.onFailure {
@@ -134,5 +172,21 @@ object Crawler extends Controller {
         }
       }
     }
+  }
+
+  implicit val conceptReads = new Reads[ArticleConcept] {
+    def reads(js: JsValue): JsResult[ArticleConcept] = {
+      Try(ArticleConcept(
+        (js \ "text").as[String],
+        (js \ "relevance").asOpt[String].map(_.toFloat).getOrElse(0),
+        (js \ "dbpedia").asOpt[String]
+      )) match {
+        case Success(e: ArticleConcept) => JsSuccess(e)
+        case Failure(t) => {
+          JsError.apply(t.getMessage + "\n" + t.getStackTrace)
+        }
+      }
+    }
+
   }
 }
