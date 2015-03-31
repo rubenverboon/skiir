@@ -1,6 +1,6 @@
 // Test Url:
 // http://www.bloomberg.com/news/articles/2015-03-15/germans-tired-of-greek-demands-want-country-to-exit-euro
-var baseUrl = 'http://145.94.164.252:9000';
+var baseUrl = 'http://145.94.164.252:9000'; // Herman's IP
 
 var testExReqs = [
   {

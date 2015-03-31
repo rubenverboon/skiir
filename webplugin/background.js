@@ -1,6 +1,5 @@
 chrome.runtime.onInstalled.addListener(function () {
   // Replace all rules ...
-  if(chrome.declarativeContent)
   chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
     // With a new rule ...
     chrome.declarativeContent.onPageChanged.addRules([
@@ -16,8 +15,6 @@ chrome.runtime.onInstalled.addListener(function () {
       }
     ]);
   });
-  else
-    console.warn("No [chrome.declarativeContent] is defined!");
 
   // Set up context menu at install time.
   var id = chrome.contextMenus.create({
@@ -29,10 +26,7 @@ chrome.runtime.onInstalled.addListener(function () {
 
 });
 // add click event
-if(chrome.contextMenus)
 chrome.contextMenus.onClicked.addListener(onClickHandler);
-else
-console.warn("No [chrome.contextMenus] is defined!");
 
 // The onClicked callback function.
 function onClickHandler(info, tab) {
