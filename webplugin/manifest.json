@@ -27,13 +27,10 @@
   "page_action": {
     "default_popup": "popup.html"
   },
-  "permissions": [
-    "http://localhost:9000/"
-  ],
   "background": {
     "scripts": [
-      "background.js",
-      "popup.js" ],
-    "persistent": false
+      "background.js"
+    ],
+    "persistent": true
   }
 }
