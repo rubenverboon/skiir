@@ -31,13 +31,11 @@ chrome.contextMenus.onClicked.addListener(onClickHandler);
 // The onClicked callback function.
 function onClickHandler(info, tab) {
   var details = {
-    phrase: info.selectionText,
-    pageUrl: info.pageUrl
+    text: info.selectionText
   };
 
   chrome.tabs.sendMessage(tab.id, {details: details});
 
-  console.log("testfoobar");
 }
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
