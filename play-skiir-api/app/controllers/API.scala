@@ -8,7 +8,7 @@ import play.api.Play.current
 import play.api.UsefulException
 import play.api.db.DB
 import play.api.libs.json.Json._
-import play.api.libs.json.{JsValue, JsArray, Json}
+import play.api.libs.json.{JsObject, JsValue, JsArray, Json}
 import play.api.mvc._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -37,39 +37,36 @@ object API extends Controller {
     }
   }
 
-  def singleArticle() = Action { request =>
+  def singleArticle() = Action.async { request =>
     val params = request.queryString.mapValues(_.headOption).map {
       case ("url", Some(u)) => "url" -> Some(u.take(articleUrlLength))
       case t => t
     }
-    val resultList = getArticles(params)
-    try
-      resultList.singleOption.map(_ \ "id").flatMap(_.asOpt[Long]).map(id =>
-        Ok(resultList(0) - "text" ++ Json.obj(
-          "requests" -> getRequests(Some(id)),
-          "annotations" -> getAnnotations(Some(id)),
-          "links" -> Json.arr(Json.obj(
-            "rel" -> "request",
-            "href" -> (controllers.routes.API.addRequestToArticle(id).toString),
-            "method" -> controllers.routes.API.addRequestToArticle(id).method,
-            "note" -> "Add a Request. You MAY provide the article_url, but it will not be used."
-          ))
-        ))
-      ).getOrElse(NotFound(Json.obj(
+
+    val urlOpt = request.queryString.get("url").flatMap(_.headOption)
+
+    Future {
+      getArticles(params)
+    }.filter(_.size == 1).recover {
+      case _ if urlOpt.isDefined => {
+        val url = urlOpt.head
+        Crawler.scrapeArticle(url).map(_ => getArticles(params))
+      }
+    } map { case (article: JsObject) :: _ =>
+      val id = (article \ "id").asOpt[Long]
+      val call = id.map(controllers.routes.API.addRequestToArticle).getOrElse(controllers.routes.API.addRequestForArticleUrl())
+      Ok(article - "text" ++ Json.obj(
+        "requests" -> getRequests(id),
+        "annotations" -> getAnnotations(id),
         "links" -> Json.arr(Json.obj(
           "rel" -> "request",
-          "href" -> (controllers.routes.API.addRequestForArticleUrl().toString),
-          "method" -> controllers.routes.API.addRequestForArticleUrl().method,
-          "note" -> "Add a Request. You MUST provide the article_url"
-        ), Json.obj(
-          "rel" -> "crawl",
-          "href" -> (controllers.routes.Crawler.crawl("url").toString),
-          "method" -> controllers.routes.Crawler.crawl("url").method,
-          "note" -> "Crawl without adding Request. You MUST replace 'url' with a url-encoded URL."
+          "href" -> call.toString,
+          "method" -> call.method,
+          "note" -> "Add a Request."
         ))
-      )))
-    catch {
-      case e: NonSingletonListException => BadRequest(s"Provide GET parameters that discriminate the articles to a unique article.")
+      ))
+    } recover {
+      case _ => BadRequest(s"Provide GET parameters that discriminate the articles to a unique article.")
     }
   }
 
