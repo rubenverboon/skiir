@@ -3,7 +3,7 @@ package controllers
 import java.util.Date
 
 import anorm._
-import models.{Annotation, Article}
+import models.{Annotation, Article, Request}
 import play.api.Play.current
 import play.api.UsefulException
 import play.api.db.DB
@@ -98,6 +98,37 @@ object API extends Controller {
           Json.obj("rel" -> "vote", "href" -> controllers.routes.API.voteAnnotation(ann.request_id, ann.article_id).toString)
         ))
       )).toList
+    }
+  }
+
+  def getRelatedArticlesOnRequest(reqid: Long) = Action {
+    DB.withConnection {implicit c =>
+      val req = SQL("SELECT * FROM request WHERE request_id= {id}").on('id -> reqid)().map(Request.fromRow).toList.head
+      val query = SQL("SELECT article.*\n" +
+          "FROM \n" +
+            "(SELECT SUM(relevance) AS rel, article_id\n" +
+             "FROM (entity JOIN entity_article ON entity.entity_id = entity_article.entity_id)\n" +
+             "WHERE {text} ILIKE '%'||entity_name||'%'\n" +
+                "AND article_id != {aid}\nGROUP BY article_id\n" +
+             "ORDER BY rel DESC\nLIMIT 4) AS c JOIN article ON c.article_id = article.article_id")
+      .on('text -> req.text_surroundings)
+      .on('aid -> req.article_id)
+      Ok(JsArray(query().map(Article.fromRow).map(a=> a.toJson).toList))
+    }
+  }
+
+  def getRelatedArticles(aid: Long) = Action {
+    DB.withConnection{ implicit c=>
+      val a = SQL"""SELECT article.*
+FROM article JOIN (
+SELECT b.article_id AS id , SUM(b.relevance) AS rel
+FROM (entity_article AS a JOIN entity_article AS b ON a.entity_id=b.entity_id)
+WHERE a.article_id=${aid} AND a.article_id != b.article_id
+GROUP BY b.article_id
+ORDER BY rel DESC
+LIMIT 4) AS c ON article.article_id = c.id"""()
+        .map(row=>Article.fromRow(row).toJson).toList
+      Ok(JsArray(a))
     }
   }
 

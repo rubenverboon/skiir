@@ -19,8 +19,8 @@ object Request {
   def fromRow(row: Row) = Request(
     row[Long]("request_id"),
     row[Long]("article_id"),
-    row[String]("request_text"),
     row[String]("request_text_surroundings"),
+    row[String]("request_text"),
     row[Option[Date]]("date_asked")
   )
 }
