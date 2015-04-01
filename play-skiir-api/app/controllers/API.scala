@@ -60,13 +60,9 @@ object API extends Controller {
       .map(Article.fromRow).map(a => a.toJson - "text" ++ Json.obj(
         "requests" -> getRequests(Some(a.id)),
         "annotations" -> getAnnotations(Some(a.id)),
-        "links" -> JsArray(Seq(
-          Json.obj(
-            "rel" -> "request",
-            "href" -> (controllers.routes.API.addRequestToArticle(a.id).toString),
-            "method" -> controllers.routes.API.addRequestToArticle(a.id).method
-          )
-        ))
+        "actions" -> Json.obj(
+          "addRequest" -> controllers.routes.API.addRequestToArticle(a.id).toString,
+        )
       )).map(Ok(_))
       .toList.singleOption
       .getOrElse(NotFound)
@@ -79,9 +75,9 @@ object API extends Controller {
         case _ => SQL("SELECT * FROM request")
       }
       val rows = query().map(models.Request.fromRow).map(req => req.toJson ++ Json.obj(
-        "links" -> JsArray(Seq(
-          Json.obj("rel" -> "annotate", "href" -> controllers.routes.API.addAnnotation(req.id).toString)
-        ))
+        "actions" -> Json.obj(
+          "annotate" -> controllers.routes.API.addAnnotation(req.id).toString
+        )
       )).toList
       JsArray(rows)
     }
@@ -94,9 +90,9 @@ object API extends Controller {
         case _ => SQL("SELECT * FROM article")
       }
       query().map(Annotation.fromRow).map(ann => ann.toJson ++ Json.obj(
-        "links" -> JsArray(Seq(
-          Json.obj("rel" -> "vote", "href" -> controllers.routes.API.voteAnnotation(ann.request_id, ann.article_id).toString)
-        ))
+        "actions" -> Json.obj(
+          "vote" -> controllers.routes.API.voteAnnotation(ann.request_id, ann.article_id).toString
+        )
       )).toList
     }
   }
@@ -163,14 +159,10 @@ LIMIT 4) AS c ON article.article_id = c.id"""()
             VALUES ($aid,$text,$surround,${new Date})""".executeInsert[Option[Long]]()
         id match {
           case Some(req) => Created(Json.obj(
-            "links" -> Json.arr(Json.obj(
-              "rel" -> "annotate",
-              "href" -> routes.API.addAnnotation(req).toString,
-              "method" -> routes.API.addAnnotation(req).method
-            ), Json.obj(
-              "rel" -> "article",
-              "href" -> routes.API.articleById(aid).toString
-            ))
+            "actions" -> Json.obj(
+              "annotate" -> routes.API.addAnnotation(req).toString,
+              "article" -> routes.API.getRelatedArticlesOnRequest(aid).toString
+            )
           )).withHeaders("Location" -> (routes.API.singleArticle() + s"?id=$aid&req_id=$req"))
           case _ => BadRequest("Something went wrong while inserting request")
         }
