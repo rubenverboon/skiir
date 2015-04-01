@@ -1,6 +1,7 @@
 // Test Url:
 // http://www.bloomberg.com/news/articles/2015-03-15/germans-tired-of-greek-demands-want-country-to-exit-euro
-var baseUrl = 'http://145.94.157.167:9000'; // Herman's IP
+//var baseUrl = 'http://145.94.157.167:9000'; // Herman's IP
+var baseUrl = 'http://0.0.0.0:9000'; // Herman's IP
 
 var testExReqs = [
   {
@@ -84,7 +85,8 @@ var dialog = document.createElement('dialog');
   document.body.insertBefore(dialog, document.body.firstChild);
 
   httpGet(baseUrl+"/articles/single", { url: window.location.href }, function(article) {
-    actions = article.links;
+    console.log(article);
+    actions = article.actions;
     show(article.requests, article.annotations);
   });
   
@@ -277,6 +279,7 @@ chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
 
     console.debug("Send annotation request to server", exReq);
 
+    console.log(actions);
     var url = actions.addRequest;
     httpPost(baseUrl+"/requests", {
       "article_url": window.location.href,

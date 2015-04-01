@@ -48,26 +48,20 @@ object API extends Controller {
         Ok(resultList(0) - "text" ++ Json.obj(
           "requests" -> getRequests(Some(id)),
           "annotations" -> getAnnotations(Some(id)),
-          "links" -> Json.arr(Json.obj(
-            "rel" -> "request",
-            "href" -> (controllers.routes.API.addRequestToArticle(id).toString),
-            "method" -> controllers.routes.API.addRequestToArticle(id).method,
-            "note" -> "Add a Request. You MAY provide the article_url, but it will not be used."
-          ))
+          "actions" -> Json.obj(
+            "addRequest" -> controllers.routes.API.addRequestToArticle(id).toString
+          )
         ))
-      ).getOrElse(NotFound(Json.obj(
-        "links" -> Json.arr(Json.obj(
-          "rel" -> "request",
-          "href" -> (controllers.routes.API.addRequestForArticleUrl().toString),
-          "method" -> controllers.routes.API.addRequestForArticleUrl().method,
-          "note" -> "Add a Request. You MUST provide the article_url"
-        ), Json.obj(
-          "rel" -> "crawl",
-          "href" -> (controllers.routes.Crawler.crawl("url").toString),
-          "method" -> controllers.routes.Crawler.crawl("url").method,
-          "note" -> "Crawl without adding Request. You MUST replace 'url' with a url-encoded URL."
+      ).getOrElse(
+        NotFound(Json.obj(
+          "requests" -> Json.arr(),
+          "annotations" -> Json.arr(),
+          "actions" -> Json.obj(
+            "addRequest" -> controllers.routes.API.addRequestForArticleUrl().toString,
+            "crawl" -> controllers.routes.Crawler.crawl("url").toString
+          )
         ))
-      )))
+      )
     catch {
       case e: NonSingletonListException => BadRequest(s"Provide GET parameters that discriminate the articles to a unique article.")
     }
@@ -79,7 +73,7 @@ object API extends Controller {
         "requests" -> getRequests(Some(a.id)),
         "annotations" -> getAnnotations(Some(a.id)),
         "actions" -> Json.obj(
-          "addRequest" -> controllers.routes.API.addRequestToArticle(a.id).toString,
+          "addRequest" -> controllers.routes.API.addRequestToArticle(a.id).toString
         )
       )).map(Ok(_))
       .toList.singleOption
