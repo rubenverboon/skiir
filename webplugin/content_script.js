@@ -54,7 +54,7 @@ $.extend($.expr[':'], {
     }  
 });
 
-var explanationRequests = [], explanations = [];
+var explanationRequests = [], explanations = [], actions;
 
 var dialogHtml =
     '<h3></h3>'+
@@ -84,6 +84,7 @@ var dialog = document.createElement('dialog');
   document.body.insertBefore(dialog, document.body.firstChild);
 
   httpGet(baseUrl+"/articles/single", { url: window.location.href }, function(article) {
+    actions = article.links;
     show(article.requests, article.annotations);
   });
   
@@ -276,6 +277,7 @@ chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
 
     console.debug("Send annotation request to server", exReq);
 
+    var url = actions.addRequest;
     httpPost(baseUrl+"/requests", {
       "article_url": window.location.href,
       "article_title": document.title,
