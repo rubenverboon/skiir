@@ -47,9 +47,27 @@ object API extends Controller {
       resultList.singleOption.map(_ \ "id").flatMap(_.asOpt[Long]).map(id =>
         Ok(resultList(0) - "text" ++ Json.obj(
           "requests" -> getRequests(Some(id)),
-          "annotations" -> getAnnotations(Some(id))
+          "annotations" -> getAnnotations(Some(id)),
+          "links" -> Json.arr(Json.obj(
+            "rel" -> "request",
+            "href" -> (controllers.routes.API.addRequestToArticle(id).toString),
+            "method" -> controllers.routes.API.addRequestToArticle(id).method,
+            "note" -> "Add a Request. You MAY provide the article_url, but it will not be used."
+          ))
         ))
-      ).getOrElse(NotFound)
+      ).getOrElse(NotFound(Json.obj(
+        "links" -> Json.arr(Json.obj(
+          "rel" -> "request",
+          "href" -> (controllers.routes.API.addRequestForArticleUrl().toString),
+          "method" -> controllers.routes.API.addRequestForArticleUrl().method,
+          "note" -> "Add a Request. You MUST provide the article_url"
+        ), Json.obj(
+          "rel" -> "crawl",
+          "href" -> (controllers.routes.Crawler.crawl("url").toString),
+          "method" -> controllers.routes.Crawler.crawl("url").method,
+          "note" -> "Crawl without adding Request. You MUST replace 'url' with a url-encoded URL."
+        ))
+      )))
     catch {
       case e: NonSingletonListException => BadRequest(s"Provide GET parameters that discriminate the articles to a unique article.")
     }
