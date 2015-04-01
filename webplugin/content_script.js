@@ -1,6 +1,6 @@
 // Test Url:
 // http://www.bloomberg.com/news/articles/2015-03-15/germans-tired-of-greek-demands-want-country-to-exit-euro
-var baseUrl = 'http://145.94.164.252:9000'; // Herman's IP
+var baseUrl = 'http://145.94.157.167:9000'; // Herman's IP
 
 var testExReqs = [
   {
@@ -83,7 +83,7 @@ var dialog = document.createElement('dialog');
   };
   document.body.insertBefore(dialog, document.body.firstChild);
 
-  $.get(baseUrl+"/articles/single", { url: window.location.href }, function(article){
+  httpGet(baseUrl+"/articles/single", { url: window.location.href }, function(article) {
     show(article.requests, article.annotations);
   });
   
@@ -94,11 +94,11 @@ var dialog = document.createElement('dialog');
 function show(requests, explanations) {
   // update de DOM met buttons en explanation components
   // TODO: Bug! only 1 request per paragraph!
-  requests.forEach(function(r){
+  requests.forEach(function(exReq){
     // search page for explanationRequest.text_surroundings
-    r.paragraph = getParagraphOfText(r.text_surroundings, r.text);
+    exReq.paragraph = getParagraphOfText(exReq.text_surroundings, exReq.text);
     // replace with button
-    addExplanationRequest(r);
+    addExplanationRequest(exReq);
   });
 
   explanations.forEach(function(e){
@@ -164,6 +164,7 @@ function addExplanationRequest(exReq) {
   var button = document.createElement('button');
   button.className = 'skiir-help';
   button.textContent = exReq.text;
+  console.log(exReq);
   button.onclick = function() { openDialog(exReq) };
 
   try {
@@ -201,13 +202,19 @@ function openDialog(exReq) {
   dialog.querySelector('h3').textContent = exReq.text;
   dialog.querySelector('p#context').innerHTML = exReq.text_surroundings.replace(exReq.text, highlight);
 
-  var snippetsHtml = '';
-  exReq.info.forEach(function(s) {
-    snippetsHtml += '<div>' + s.text + '<label><input type="checkbox" value="'+ s.reference +
-    '">add link</label></div>';
+  // get snippets
+  httpGet(exReq.actions.relatedArticles, null, function(data) {
+    var snippetsHtml = '';
+
+    data.forEach(function(s) {
+      snippetsHtml += '<div>' + s.text + '<label><input type="checkbox" value="'+ s.reference +
+      '">add link</label></div>';
+    });
+
+    dialog.querySelector('div#snippets').innerHTML = snippetsHtml;
+
   });
 
-  dialog.querySelector('div#snippets').innerHTML = snippetsHtml;
 
   dialog.querySelector('#done').onclick = function (e) {
 
@@ -223,7 +230,7 @@ function openDialog(exReq) {
 
     console.info("Sending annotation to server", exReq.explanation);
 
-    $.post(baseUrl+'/requests/'+exReq.id+'/annotations', postData, function(data) {
+    httpPost(exReq.actions.annotate, postData, function(data) {
 
       updateExplanationRequest(exReq);
 
@@ -267,24 +274,54 @@ chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
   if(req.details) {
     var exReq = req.details;
 
-    exReq.paragraph = getSelectionParentElement();
-    exReq.text_surroundings = exReq.paragraph.textContent;
+    console.debug("Send annotation request to server", exReq);
 
-    $.post(baseUrl+"/requests", {
+    httpPost(baseUrl+"/requests", {
       "article_url": window.location.href,
       "article_title": document.title,
-      "article_text": document.querySelector('.article-body').innerText,
+      "article_text": document.querySelector('.article-body').textContent,
       "request_text": exReq.text,
-      "request_text_surroundings": exReq.paragraph.innerText
-
+      "request_text_surroundings": getSelectionParentElement().textContent
     }, function(data) {
-      // TODO: give feedback to user (checkmark overlay/anything)
-      console.log("Saved at server");
-
-      addExplanationRequest(data);
+        console.log("Saved at server");
+        console.log(data);
+        //addExplanationRequest(data);
     });
 
-    console.debug("Send annotation request to server", exReq);
     sendResponse({farewell: "goodbye"});
   }
 });
+
+function httpGet(url, params, callback) {
+
+  function serialize(obj) {
+    var str = [];
+    for(var p in obj)
+      if (obj.hasOwnProperty(p)) {
+        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+      }
+    return str.join("&");
+  }
+
+  if(params) url += '?'+serialize(params);
+
+  var httpRequest = new XMLHttpRequest();
+
+  if(callback)
+    httpRequest.onloadend = function() {callback(JSON.parse(httpRequest.responseText))};
+
+  httpRequest.open('GET', url, true);
+  httpRequest.send();
+
+}
+
+function httpPost(url, data, callback) {
+  var httpRequest = new XMLHttpRequest();
+  httpRequest.open("POST", url, true);
+  httpRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+  httpRequest.send(JSON.stringify(data));
+
+  if(callback)
+    httpRequest.onloadend = function() { callback(JSON.parse(httpRequest.responseText)); };
+}
+
