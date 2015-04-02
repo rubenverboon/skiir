@@ -13,6 +13,7 @@
       "matches": ["http://www.bloomberg.com/*"],
       "run_at": "document_end",
       "js": [
+        "jquery-2.1.3.js",
         "content_script.js"
       ]
     },
@@ -28,8 +29,8 @@
   },
   "background": {
     "scripts": [
-      "background.js",
-      "popup.js" ],
-    "persistent": false
+      "background.js"
+    ],
+    "persistent": true
   }
 }

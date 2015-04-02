@@ -2,17 +2,25 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+OPTIONS    /*path               controllers.Application.options(path)
+
 # Home page
 GET        /                    controllers.Application.index
 
 GET        /requests            controllers.API.requests
-POST       /requests            controllers.API.addRequest
+POST       /requests            controllers.API.addRequestForArticleUrl
+POST       /requests/:rid/annotations    controllers.API.addAnnotation(rid: Long)
+POST       /requests/:rid/annotations/:eid/vote    controllers.API.voteAnnotation(rid: Long,eid: Long)
 
 GET        /articles            controllers.API.articles
-
-GET        /articles/:id        controllers.API.singleArticle(id: Long)
+GET        /articles/single     controllers.API.singleArticle
+GET        /articles/:id        controllers.API.articleById(id: Long)
+POST       /articles/:id/requests   controllers.API.addRequestToArticle(id: Long)
 
 GET        /explain/:text       controllers.Crawler.explain(text: String)
+
+GET        /crawl/:url          controllers.Crawler.crawl(url: String)
+GET        /crawl               controllers.Crawler.crawl(url: String ?= "")
 
 # Testing
 GET        /seed                controllers.Seed.seed
