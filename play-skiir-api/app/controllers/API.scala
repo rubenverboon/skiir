@@ -2,6 +2,7 @@ package controllers
 
 import java.util.Date
 
+import anorm.SqlParser._
 import anorm._
 import models.{Annotation, Article, Request}
 import play.api.Play.current
@@ -10,6 +11,7 @@ import play.api.db.DB
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsValue, JsArray, Json}
 import play.api.mvc._
+import semanticate.Highlighter
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -127,6 +129,10 @@ object API extends Controller {
   def getRelatedArticlesOnRequest(reqid: Long) = Action {
     DB.withConnection {implicit c =>
       val req = SQL("SELECT * FROM request WHERE request_id= {id}").on('id -> reqid)().map(Request.fromRow).toList.head
+
+      // Entities that can be found in the text_surroundings
+      val selectedEntities = SQL"""SELECT entity_id FROM entity_article WHERE article_id = ${req.article_id} AND ${req.text_surroundings} ILIKE '%'||text||'%'""" as { scalar[Long].* }
+
       val query = SQL("SELECT article.*\n" +
           "FROM \n" +
             "(SELECT SUM(relevance) AS rel, article_id\n" +
@@ -136,7 +142,12 @@ object API extends Controller {
              "ORDER BY rel DESC\nLIMIT 4) AS c JOIN article ON c.article_id = article.article_id")
       .on('text -> req.text_surroundings)
       .on('aid -> req.article_id)
-      Ok(JsArray(query().map(Article.fromRow).map(a=> a.toJson).toList))
+      Ok(JsArray(query().map(Article.fromRow).map(a => {
+        val words = SQL(s"SELECT text FROM entity_article WHERE article_id = ${a.id} AND entity_id IN (${selectedEntities.mkString(",")})") as { scalar[String].* }
+        a.toJson ++ Json.obj(
+          "snippets" -> Highlighter.highlight(a.text, words).map(_.toJson(a.text)).toList
+        )
+      }).toList))
     }
   }
 
