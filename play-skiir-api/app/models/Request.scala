@@ -61,7 +61,7 @@ case class Annotation(id: Long, request_id: Long, article_id: Long, answer: Stri
 
 object Annotation {
   def fromRow(row: Row) = Annotation(
-    row[Long]("annoation_id"),
+    row[Long]("annotation_id"),
     row[Long]("request_id"),
     row[Long]("article_id"),
     row[String]("annotation_answer"),

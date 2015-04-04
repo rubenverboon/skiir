@@ -95,10 +95,18 @@ object API extends Controller {
       val rows = query().map(models.Request.fromRow).map(req => req.toJson ++ Json.obj(
         "actions" -> Json.obj(
           "annotate" -> controllers.routes.API.addAnnotation(req.id).toString,
-          "relatedArticles" -> controllers.routes.API.getRelatedArticlesOnRequest(req.id).toString
+          "relatedArticles" -> controllers.routes.API.getRelatedArticlesOnRequest(req.id).toString,
+          "annotations" -> controllers.routes.API.getAnnotationsRequest(req.id).toString
         )
       )).toList
       JsArray(rows)
+    }
+  }
+
+  def getAnnotationsRequest(request_id: Long) = Action {
+    DB.withConnection { implicit c =>
+      val query = SQL"""SELECT * FROM annotation WHERE request_id =${request_id}"""
+      Ok(JsArray(query().map(Annotation.fromRow).map(a=>a.toJson).toList))
     }
   }
 
@@ -195,7 +203,7 @@ LIMIT 4) AS c ON article.article_id = c.id"""()
         "(request_id, article_id, annotation_answer, date_answered, refs) VALUES " +
         "({rid}, (SELECT article_id FROM request WHERE request_id = {rid}), {expl}, {date}, {refs})").on(
           'rid -> rid,
-          'expl -> (json \ "explaination").as[String],
+          'expl -> (json \ "explanation").as[String],
           'date -> new Date(),
           'refs -> (json \ "references").toString
         ).executeInsert[Option[Long]]()

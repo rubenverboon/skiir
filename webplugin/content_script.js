@@ -62,7 +62,10 @@ var dialogHtml =
     '<p id="context"></p>'+
     '<textarea placeholder="write an explanation here"></textarea>'+
     '<button id="done">Done</button>'+
-    '<div id="snippets"></div>'
+    '<h4>Annotations</h4>'+
+    '<div id="annotations"></div>'+
+    '<h4>Related Articles</h4>'+
+    '<div id="relatedArticles"></div>'
     ;
 
 var dialog = document.createElement('dialog');
@@ -83,7 +86,7 @@ var dialog = document.createElement('dialog');
   };
   document.body.insertBefore(dialog, document.body.firstChild);
 
-  httpGet(baseUrl+"/articles/single", { url: window.location.href }, function(article) {
+  httpGet("/articles/single", { url: window.location.href }, function(article) {
     actions = article.links;
     show(article.requests, article.annotations);
   });
@@ -202,10 +205,8 @@ function openDialog(exReq) {
   dialog.showModal();
   dialog.querySelector('h3').textContent = exReq.text;
   dialog.querySelector('p#context').innerHTML = exReq.text_surroundings.replace(exReq.text, highlight);
-  console.log("sending request");
-  console.log(exReq);
   // get snippets
-  httpGet(baseUrl + exReq.actions.relatedArticles, null, function(data) {
+  httpGet(exReq.actions.relatedArticles, null, function(data) {
     var snippetsHtml = '';
     console.log(data);
     data.forEach(function(s) {
@@ -214,9 +215,22 @@ function openDialog(exReq) {
       console.log(s);
     });
 
-    dialog.querySelector('div#snippets').innerHTML = snippetsHtml;
+    dialog.querySelector('div#relatedArticles').innerHTML = snippetsHtml;
 
   });
+
+  httpGet(exReq.actions.annotations, null, function(data) {
+    var snippetsHtml = '<ol>';
+    console.log(data);
+    data.forEach(function(s) {
+      snippetsHtml += '<li>'+ s.answer + '</li>';
+      console.log(s);
+    });
+    snippetsHtml+= '</ol>';
+    dialog.querySelector('div#annotations').innerHTML = snippetsHtml;
+
+  });
+  console.log(exReq);
 
 
   dialog.querySelector('#done').onclick = function (e) {
@@ -314,14 +328,14 @@ function httpGet(url, params, callback) {
   if(callback)
     httpRequest.onloadend = function() {callback(JSON.parse(httpRequest.responseText))};
 
-  httpRequest.open('GET', url, true);
+  httpRequest.open('GET', baseUrl + url, true);
   httpRequest.send();
 
 }
 
 function httpPost(url, data, callback) {
   var httpRequest = new XMLHttpRequest();
-  httpRequest.open("POST", url, true);
+  httpRequest.open("POST", baseUrl + url, true);
   httpRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
   httpRequest.send(JSON.stringify(data));
 
