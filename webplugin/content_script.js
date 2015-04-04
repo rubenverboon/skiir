@@ -199,6 +199,25 @@ function updateExplanationRequest(exReq) {
   addExplanation(exReq);
 }
 
+function stringify(snip) {
+  result='';
+  var bolds = snip.bolds[0];
+  bolds.sort(function(a,b){return b[1]-a[1]}); //last one first
+  var start = snip.outer[0];
+  var result = snip.snip;
+  bolds.forEach(function(bold) {
+    result = [result.slice(0, bold[1] - start), '</b>', result.slice(bold[1] - start)].join('');
+    result = [result.slice(0, bold[0] - start), '<b>', result.slice(bold[0] - start)].join('');
+    console.log(result);
+  });
+  if (start != 0) result = "..." + result;
+  result +='...';
+
+  return result ;
+}
+
+
+
 function openDialog(exReq) {
 
   var highlight = '<span>'+exReq.text+'</span>';
@@ -210,7 +229,7 @@ function openDialog(exReq) {
     var snippetsHtml = '';
     console.log(data);
     data.forEach(function(s) {
-      snippetsHtml += '<div><a href="'+ s.url+'">' + s.text + '<label><input type="checkbox" value="'+ s.reference +
+      snippetsHtml += '<div><a href="'+ s.url+'">' +'<h4>'+ s.title.toUpperCase()+'</h4>'+ s.snippets.map(stringify).reduce(function(a,b){return a+b}) + '<label><input type="checkbox" value="'+ s.reference +
       '">add link</label></a></div>';
       console.log(s);
     });
