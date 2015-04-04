@@ -89,6 +89,19 @@
     margin-top: -400px;
 
 }
+@media screen and (max-width: 1024px), screen and (max-height: 825px) {
+    #skiir-dialog {
+        width: auto;
+        left: 15px;
+        right: 15px;
+        top: 15px;
+        bottom: 15px;
+        margin: 0;
+        height: auto;
+        position: fixed;
+        overflow-y: auto;
+    }
+}
 
 #skiir-dialog #close {
     position: absolute;
