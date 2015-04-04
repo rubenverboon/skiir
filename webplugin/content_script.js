@@ -1,6 +1,6 @@
 // Test Url:
 // http://www.bloomberg.com/news/articles/2015-03-15/germans-tired-of-greek-demands-want-country-to-exit-euro
-var baseUrl = 'http://145.94.157.167:9000'; // Herman's IP
+var baseUrl = 'http://127.0.0.1:9000'; // Herman's IP
 
 var testExReqs = [
   {
@@ -202,14 +202,16 @@ function openDialog(exReq) {
   dialog.showModal();
   dialog.querySelector('h3').textContent = exReq.text;
   dialog.querySelector('p#context').innerHTML = exReq.text_surroundings.replace(exReq.text, highlight);
-
+  console.log("sending request");
+  console.log(exReq);
   // get snippets
-  httpGet(exReq.actions.relatedArticles, null, function(data) {
+  httpGet(baseUrl + exReq.actions.relatedArticles, null, function(data) {
     var snippetsHtml = '';
-
+    console.log(data);
     data.forEach(function(s) {
-      snippetsHtml += '<div>' + s.text + '<label><input type="checkbox" value="'+ s.reference +
-      '">add link</label></div>';
+      snippetsHtml += '<div><a href="'+ s.url+'">' + s.text + '<label><input type="checkbox" value="'+ s.reference +
+      '">add link</label></a></div>';
+      console.log(s);
     });
 
     dialog.querySelector('div#snippets').innerHTML = snippetsHtml;

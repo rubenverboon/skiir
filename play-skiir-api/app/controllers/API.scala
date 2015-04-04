@@ -94,7 +94,8 @@ object API extends Controller {
       }
       val rows = query().map(models.Request.fromRow).map(req => req.toJson ++ Json.obj(
         "actions" -> Json.obj(
-          "annotate" -> controllers.routes.API.addAnnotation(req.id).toString
+          "annotate" -> controllers.routes.API.addAnnotation(req.id).toString,
+          "relatedArticles" -> controllers.routes.API.getRelatedArticlesOnRequest(req.id).toString
         )
       )).toList
       JsArray(rows)
