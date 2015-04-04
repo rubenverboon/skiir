@@ -57,11 +57,13 @@ $.extend($.expr[':'], {
 var explanationRequests = [], explanations = [], actions;
 
 var dialogHtml =
-    '<h3></h3>'+
+    '<h3>Please explain this</h3>'+
     '<button id="close">&#x2716;</button>'+
     '<p id="context"></p>'+
-    '<textarea placeholder="write an explanation here"></textarea>'+
+    '<div class="row">'+
+    '<textarea placeholder="Please explain the underlined text above"></textarea>'+
     '<button id="done">Done</button>'+
+    '</div>'+
     '<h3 class="skiir-dialog-title">Annotations</h3>'+
     '<div id="annotations"></div>'+
     '<h3 class="skiir-dialog-title">Related Articles</h3>'+
@@ -216,14 +218,34 @@ function stringify(snip) {
   return result ;
 }
 
+// scrollParent is from Jquery-UI
+$.fn.scrollParent = function( includeHidden ) {
+  var position = this.css( "position" ),
+    excludeStaticParent = position === "absolute",
+    overflowRegex = includeHidden ? /(auto|scroll|hidden)/ : /(auto|scroll)/,
+    scrollParent = this.parents().filter( function() {
+      var parent = $( this );
+      if ( excludeStaticParent && parent.css( "position" ) === "static" ) {
+        return false;
+      }
+      return overflowRegex.test( parent.css( "overflow" ) + parent.css( "overflow-y" ) + parent.css( "overflow-x" ) );
+    } ).eq( 0 );
 
+  return position === "fixed" || !scrollParent.length ? $( this[ 0 ].ownerDocument || document ) : scrollParent;
+};
+$.fn.scrollView = function (duration) {
+  return this.each(function () {
+      $($(this).scrollParent()).get(0).scrollTop = $(this).offset().top - $($(this).scrollParent()).offset().top;
+  });
+}
 
 function openDialog(exReq) {
 
-  var highlight = '<span>'+exReq.text+'</span>';
+  var highlight = '<span id="exReqText">'+exReq.text+'</span>';
   dialog.showModal();
-  dialog.querySelector('h3').textContent = exReq.text;
+  //dialog.querySelector('h3').textContent = exReq.text;
   dialog.querySelector('p#context').innerHTML = exReq.text_surroundings.replace(exReq.text, highlight);
+  $("#exReqText").scrollView();
   // get snippets
   httpGet(exReq.actions.relatedArticles, null, function(data) {
     var snippetsHtml = '';

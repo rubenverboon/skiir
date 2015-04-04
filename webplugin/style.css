@@ -1,4 +1,4 @@
-.skiir-help {
+.skiir-help, #skiir-dialog #context span {
     background: none;
     border: none;
     border-bottom: 1px solid red;
@@ -120,17 +120,25 @@
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.8);
 }
-
-#skiir-dialog textarea {
-    width: 950px;
-    height: 80px;
+#skiir-dialog .row {
+    display: flex;
+    width: 100%;
 }
-
+#skiir-dialog textarea {
+    width: 100%;
+    padding: 10px 30px;
+    height: 44px;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border: none;
+    background: #eee;
+}
 #skiir-dialog #done {
     background-color: rgba(105, 199, 155, 1);
     border: 1px solid rgba(105, 199, 155, 0.5);
     color: white;
-    border-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
     font-weight: bold;
     padding: 10px 30px;
 }
@@ -138,8 +146,7 @@
     background-color: rgba(105, 199, 155, 0.5);
 }
 #skiir-dialog #context {
-    height: 63px;
-    overflow-y: scroll;
+    height: auto;
 }
 #skiir-dialog #context span {
     font-weight: bold;
