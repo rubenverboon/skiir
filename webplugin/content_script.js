@@ -336,7 +336,7 @@ chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
     console.debug("Send annotation request to server", exReq);
 
     var url = actions.addRequest;
-    httpPost(baseUrl+"/requests", {
+    httpPost("/requests", {
       "article_url": window.location.href,
       "article_title": document.title,
       "article_text": document.querySelector('.article-body').textContent,
