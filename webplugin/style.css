@@ -126,6 +126,8 @@
 }
 #skiir-dialog textarea {
     width: 100%;
+}
+#skiir-dialog .skiir-button-prefix, #skiir-dialog textarea {
     padding: 10px 30px;
     height: 44px;
     border-top-left-radius: 5px;
@@ -133,15 +135,29 @@
     border: none;
     background: #eee;
 }
-#skiir-dialog #done {
-    background-color: rgba(105, 199, 155, 1);
-    border: 1px solid rgba(105, 199, 155, 0.5);
-    color: white;
+#skiir-dialog .votes {
+    padding: 10px 10px;
+}
+#skiir-dialog .skiir-button {
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
     font-weight: bold;
     padding: 10px 30px;
 }
+#skiir-dialog #done, #skiir-dialog button.vote {
+    background-color: rgba(105, 199, 155, 1);
+    border: 1px solid rgba(105, 199, 155, 0.5);
+    color: white;
+}
+#skiir-dialog button.vote + span {
+    /* padding after vote button */
+    padding-left: 15px;
+}
+#skiir-dialog #skiir-dialog-ol .row {
+    /* aligns annotation text in the middle of the vote button */
+    align-items: center;
+}
+
 #skiir-dialog #done:hover {
     background-color: rgba(105, 199, 155, 0.5);
 }

@@ -111,7 +111,7 @@ object API extends Controller {
   def getAnnotationsRequest(request_id: Long) = Action {
     DB.withConnection { implicit c =>
       val query = SQL"""SELECT * FROM annotation WHERE request_id =${request_id}"""
-      Ok(JsArray(query().map(Annotation.fromRow).map(a=>a.toJson).toList))
+      Ok(JsArray(query().map(Annotation.fromRow).map(a=>a.toJson ++ a.actionsJson).toList))
     }
   }
 
@@ -121,11 +121,7 @@ object API extends Controller {
         case Some(aid) => SQL("SELECT * FROM annotation WHERE article_id = {aid}").on('aid -> aid)
         case _ => SQL("SELECT * FROM article")
       }
-      query().map(Annotation.fromRow).map(ann => ann.toJson ++ Json.obj(
-        "actions" -> Json.obj(
-          "vote" -> controllers.routes.API.voteAnnotation(ann.request_id, ann.article_id).toString
-        )
-      )).toList
+      query().map(Annotation.fromRow).map(ann => ann.toJson ++ ann.actionsJson).toList
     }
   }
 

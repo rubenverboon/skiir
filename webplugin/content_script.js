@@ -61,8 +61,8 @@ var dialogHtml =
     '<button id="close">&#x2716;</button>'+
     '<p id="context"></p>'+
     '<div class="row">'+
-    '<textarea placeholder="Please explain the underlined text above"></textarea>'+
-    '<button id="done">Done</button>'+
+    '<textarea class="skiir-button-prefix" placeholder="Please explain the underlined text above"></textarea>'+
+    '<button id="done" class="skiir-button">Done</button>'+
     '</div>'+
     '<h3 class="skiir-dialog-title">Pick your sources:</h3>'+
     '<div id="relatedArticles"></div>'+
@@ -268,18 +268,26 @@ function openDialog(exReq) {
   });
 
   httpGet(exReq.actions.annotations, null, function(data) {
-    var snippetsHtml = '<ol id ="skiir-dialog-ol">';
-    console.log(data);
+    var snippetsHtml = '<div id ="skiir-dialog-ol">';
     data.sort(function(a,b) {return b.votes- a.votes});
     data.forEach(function(s) {
-      snippetsHtml += '<li>'+ s.answer + ' ('+ s.votes+')</li>';
-      console.log(s);
+      var vote_url = s.actions.vote;
+      snippetsHtml += 
+        '<div class="row"><div class="skiir-button-prefix votes">'+s.votes+'</div>'+
+        '<button class="skiir-button vote" data-url="'+vote_url+'">Vote</button>'+
+        '<span>' + s.answer + '</span></div>';
     });
-    snippetsHtml+= '</ol>';
+    snippetsHtml+= '</div>';
     dialog.querySelector('div#annotations').innerHTML = snippetsHtml;
-
   });
-  console.log(exReq);
+
+  // Vote button functionality
+  $(dialog).on("click", "button.vote", function(){
+    var b = $(this);
+    $.post(baseUrl+b.attr('data-url'), null, function(){
+      b.prev(".votes").text(1+parseInt(b.prev(".votes").text()));
+    });
+  });
 
   // Submitting of Annotation:
   dialog.querySelector('#done').onclick = function (e) {

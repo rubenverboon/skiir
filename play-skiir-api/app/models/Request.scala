@@ -65,6 +65,11 @@ case class Annotation(id: Long, request_id: Long, article_id: Long, answer: Stri
     "votes"         -> votes,
     "references"    -> references
   )
+  def actionsJson = Json.obj(
+    "actions" -> Json.obj(
+      "vote" -> controllers.routes.API.voteAnnotation(request_id, article_id).toString
+    )
+  )
 }
 
 object Annotation {
