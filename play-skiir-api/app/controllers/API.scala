@@ -79,7 +79,7 @@ object API extends Controller {
         "requests" -> getRequests(Some(a.id)),
         "annotations" -> getAnnotations(Some(a.id)),
         "actions" -> Json.obj(
-          "addRequest" -> controllers.routes.API.addRequestToArticle(a.id).toString,
+          "addRequest" -> controllers.routes.API.addRequestToArticle(a.id).toString
         )
       )).map(Ok(_))
       .toList.singleOption
