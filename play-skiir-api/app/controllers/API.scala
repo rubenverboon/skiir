@@ -94,14 +94,17 @@ object API extends Controller {
         case Some(aid) => SQL("SELECT * FROM request WHERE article_id = {aid}").on('aid -> aid)
         case _ => SQL("SELECT * FROM request")
       }
-      val rows = query().map(models.Request.fromRow).map(req => req.toJson ++ Json.obj(
-        "actions" -> Json.obj(
-          "annotate" -> controllers.routes.API.addAnnotation(req.id).toString,
-          "relatedArticles" -> controllers.routes.API.getRelatedArticlesOnRequest(req.id).toString,
-          "annotations" -> controllers.routes.API.getAnnotationsRequest(req.id).toString
-        )
-      )).toList
+      val rows = query().map(models.Request.fromRow).map(req => req.toJson ++ req.actionsJson).toList
       JsArray(rows)
+    }
+  }
+
+  def getRequestById(id: Long) = Action {
+    DB.withConnection { implicit c =>
+      SQL"""SELECT * FROM request WHERE request_id = $id"""().map(models.Request.fromRow).map(req => req.toJson ++ req.actionsJson)
+        .headOption
+        .map(r => Ok(r))
+        .getOrElse(NotFound)
     }
   }
 
@@ -198,8 +201,10 @@ LIMIT 4) AS c ON article.article_id = c.id"""()
         id match {
           case Some(req) => Created(Json.obj(
             "actions" -> Json.obj(
+              "self" -> routes.API.getRequestById(req).toString,
+              "article" -> routes.API.articleById(aid).toString,
               "annotate" -> routes.API.addAnnotation(req).toString,
-              "article" -> routes.API.getRelatedArticlesOnRequest(req).toString
+              "relatedArticles" -> routes.API.getRelatedArticlesOnRequest(req).toString
             )
           )).withHeaders("Location" -> (routes.API.singleArticle() + s"?id=$aid&req_id=$req"))
           case _ => BadRequest("Something went wrong while inserting request")

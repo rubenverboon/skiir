@@ -64,10 +64,10 @@ var dialogHtml =
     '<textarea placeholder="Please explain the underlined text above"></textarea>'+
     '<button id="done">Done</button>'+
     '</div>'+
-    '<h3 class="skiir-dialog-title">Annotations</h3>'+
-    '<div id="annotations"></div>'+
-    '<h3 class="skiir-dialog-title">Related Articles</h3>'+
-    '<div id="relatedArticles"></div>'
+    '<h3 class="skiir-dialog-title">Pick your sources:</h3>'+
+    '<div id="relatedArticles"></div>'+
+    '<h3 class="skiir-dialog-title">Or vote for one of these explanations:</h3>'+
+    '<div id="annotations"></div>'
     ;
 
 var dialog = document.createElement('dialog');
@@ -251,8 +251,15 @@ function openDialog(exReq) {
     var snippetsHtml = '';
     console.log(data);
     data.forEach(function(s) {
-      snippetsHtml += '<div><a href="'+ s.url+'">' +'<h4>'+ s.title.toUpperCase()+'</h4>'+ s.snippets.map(stringify).reduce(function(a,b){return a+b}) + '<label><input type="checkbox" value="'+ s.reference +
-      '">add link</label></a></div>';
+      snippetsHtml += 
+        '<div class="row">'+
+          '<label><input type="checkbox" value="'+ s.reference +'"></label>'+
+          '<div>'+
+            '<a href="'+ s.url+'">'+
+            '<h4>'+ s.title.toUpperCase()+'</h4>'+
+            s.snippets.map(stringify).reduce(function(a,b){return a+b}, "")+
+            '</a></div>'+
+        '</div>';
       console.log(s);
     });
 
@@ -274,7 +281,7 @@ function openDialog(exReq) {
   });
   console.log(exReq);
 
-
+  // Submitting of Annotation:
   dialog.querySelector('#done').onclick = function (e) {
 
     var references = [].map.call( // return all values from checked checkboxes
@@ -326,28 +333,37 @@ function getSelectionParentElement() {
   return parentEl;
 }
 
-// Message handler (from background.js)
+// Adding a Request via right-clicking:
 chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
-
-    // handle right click text selection requests
   if(req.details) {
     var exReq = req.details;
-
     console.debug("Send annotation request to server", exReq);
 
-    var url = actions.addRequest;
-    httpPost("/requests", {
+    var postbody = {
       "article_url": window.location.href,
       "article_title": document.title,
       "article_text": document.querySelector('.article-body').textContent,
       "request_text": exReq.text,
       "request_text_surroundings": getSelectionParentElement().textContent
-    }, function(data) {
-        console.log("Saved at server");
-        console.log(data);
-        //addExplanationRequest(data);
-    });
+    };
+    var paragraph = getSelectionParentElement();
 
+    var url = actions.addRequest;
+    $.ajax({
+      url: baseUrl+"/requests", 
+      data: JSON.stringify(postbody), 
+      contentType: 'application/json', 
+      'type': 'POST'
+    }).done(function(data){
+      // The request was saved, now display annotation request:
+      $.getJSON(baseUrl+data.actions.self).done(function(exReq){
+        exReq.paragraph = paragraph;
+        addExplanationRequest(exReq);
+        //openDialog(exReq);
+      });
+    }).fail(function(){
+
+    });
     sendResponse({farewell: "goodbye"});
   }
 });

@@ -13,6 +13,14 @@ case class Request(id: Long, article_id: Long, text_surroundings: String, text: 
     "text_surroundings" -> text_surroundings,
     "date_asked"  -> date_asked
   )
+  def actionsJson = Json.obj(
+    "actions" -> Json.obj(
+      "self" -> controllers.routes.API.getRequestById(id).toString,
+      "annotate" -> controllers.routes.API.addAnnotation(id).toString,
+      "relatedArticles" -> controllers.routes.API.getRelatedArticlesOnRequest(id).toString,
+      "annotations" -> controllers.routes.API.getAnnotationsRequest(id).toString
+    )
+  )
 }
 
 object Request {

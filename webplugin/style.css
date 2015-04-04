@@ -170,8 +170,9 @@
     cursor: pointer;
     text-decoration: underline;
 }
-#skiir-dialog #snippets label [type="checkbox"] {
-    margin-right: 10px;
+#skiir-dialog #snippets label input, #skiir-dialog #relatedArticles label input {
+    zoom: 3;
+    margin-right: 15px;
 }
 
 #skiir-dialog-ol {
@@ -188,5 +189,7 @@
 }
 
 .skiir-dialog-title {
+    text-align: left;
     font-size: 20pt;
+    line-height: 33pt;
 }
