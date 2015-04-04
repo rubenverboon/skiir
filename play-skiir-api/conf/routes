@@ -9,9 +9,11 @@ GET            /                                           controllers.Applicati
 
 GET            /requests                                   controllers.API.requests
 POST           /requests                                   controllers.API.addRequestForArticleUrl
+GET            /requests/:rid                              controllers.API.getRequestById(rid: Long)
 POST           /requests/:rid/annotations                  controllers.API.addAnnotation(rid: Long)
 POST           /requests/:rid/annotations/:eid/vote        controllers.API.voteAnnotation(rid: Long,eid: Long)
-GET            /requests/:rid/articles                     controllers.API.getRelatedArticlesOnRequest(rid: Long)
+GET            /requests/:rid/relatedArticles              controllers.API.getRelatedArticlesOnRequest(rid: Long)
+GET            /requests/:rid/annotations                  controllers.API.getAnnotationsRequest(rid: Long)
 
 GET            /articles                                   controllers.API.articles
 GET            /articles/single                            controllers.API.singleArticle

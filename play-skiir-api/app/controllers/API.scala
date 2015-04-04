@@ -2,6 +2,7 @@ package controllers
 
 import java.util.Date
 
+import anorm.SqlParser._
 import anorm._
 import models.{Annotation, Article, Request}
 import play.api.Play.current
@@ -10,6 +11,7 @@ import play.api.db.DB
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsValue, JsArray, Json}
 import play.api.mvc._
+import semanticate.Highlighter
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -92,12 +94,24 @@ object API extends Controller {
         case Some(aid) => SQL("SELECT * FROM request WHERE article_id = {aid}").on('aid -> aid)
         case _ => SQL("SELECT * FROM request")
       }
-      val rows = query().map(models.Request.fromRow).map(req => req.toJson ++ Json.obj(
-        "actions" -> Json.obj(
-          "annotate" -> controllers.routes.API.addAnnotation(req.id).toString
-        )
-      )).toList
+      val rows = query().map(models.Request.fromRow).map(req => req.toJson ++ req.actionsJson).toList
       JsArray(rows)
+    }
+  }
+
+  def getRequestById(id: Long) = Action {
+    DB.withConnection { implicit c =>
+      SQL"""SELECT * FROM request WHERE request_id = $id"""().map(models.Request.fromRow).map(req => req.toJson ++ req.actionsJson)
+        .headOption
+        .map(r => Ok(r))
+        .getOrElse(NotFound)
+    }
+  }
+
+  def getAnnotationsRequest(request_id: Long) = Action {
+    DB.withConnection { implicit c =>
+      val query = SQL"""SELECT * FROM annotation WHERE request_id =${request_id}"""
+      Ok(JsArray(query().map(Annotation.fromRow).map(a=>a.toJson ++ a.actionsJson).toList))
     }
   }
 
@@ -107,17 +121,17 @@ object API extends Controller {
         case Some(aid) => SQL("SELECT * FROM annotation WHERE article_id = {aid}").on('aid -> aid)
         case _ => SQL("SELECT * FROM article")
       }
-      query().map(Annotation.fromRow).map(ann => ann.toJson ++ Json.obj(
-        "actions" -> Json.obj(
-          "vote" -> controllers.routes.API.voteAnnotation(ann.request_id, ann.article_id).toString
-        )
-      )).toList
+      query().map(Annotation.fromRow).map(ann => ann.toJson ++ ann.actionsJson).toList
     }
   }
 
   def getRelatedArticlesOnRequest(reqid: Long) = Action {
     DB.withConnection {implicit c =>
       val req = SQL("SELECT * FROM request WHERE request_id= {id}").on('id -> reqid)().map(Request.fromRow).toList.head
+
+      // Entities that can be found in the text_surroundings
+      val selectedEntities = SQL"""SELECT entity_id FROM entity_article WHERE article_id = ${req.article_id} AND ${req.text_surroundings} ILIKE '%'||text||'%'""" as { scalar[Long].* }
+
       val query = SQL("SELECT article.*\n" +
           "FROM \n" +
             "(SELECT SUM(relevance) AS rel, article_id\n" +
@@ -127,7 +141,12 @@ object API extends Controller {
              "ORDER BY rel DESC\nLIMIT 4) AS c JOIN article ON c.article_id = article.article_id")
       .on('text -> req.text_surroundings)
       .on('aid -> req.article_id)
-      Ok(JsArray(query().map(Article.fromRow).map(a=> a.toJson).toList))
+      Ok(JsArray(query().map(Article.fromRow).map(a => {
+        val words = SQL(s"SELECT text FROM entity_article WHERE article_id = ${a.id} AND entity_id IN (${selectedEntities.mkString(",")})") as { scalar[String].* }
+        a.toJson ++ Json.obj(
+          "snippets" -> Highlighter.highlight(a.text, words).map(_.toJson(a.text)).toList
+        )
+      }).toList))
     }
   }
 
@@ -178,8 +197,10 @@ LIMIT 4) AS c ON article.article_id = c.id"""()
         id match {
           case Some(req) => Created(Json.obj(
             "actions" -> Json.obj(
+              "self" -> routes.API.getRequestById(req).toString,
+              "article" -> routes.API.articleById(aid).toString,
               "annotate" -> routes.API.addAnnotation(req).toString,
-              "article" -> routes.API.getRelatedArticlesOnRequest(aid).toString
+              "relatedArticles" -> routes.API.getRelatedArticlesOnRequest(req).toString
             )
           )).withHeaders("Location" -> (routes.API.singleArticle() + s"?id=$aid&req_id=$req"))
           case _ => BadRequest("Something went wrong while inserting request")
@@ -194,7 +215,7 @@ LIMIT 4) AS c ON article.article_id = c.id"""()
         "(request_id, article_id, annotation_answer, date_answered, refs) VALUES " +
         "({rid}, (SELECT article_id FROM request WHERE request_id = {rid}), {expl}, {date}, {refs})").on(
           'rid -> rid,
-          'expl -> (json \ "explaination").as[String],
+          'expl -> (json \ "explanation").as[String],
           'date -> new Date(),
           'refs -> (json \ "references").toString
         ).executeInsert[Option[Long]]()

@@ -1,4 +1,4 @@
-.skiir-help {
+.skiir-help, #skiir-dialog #context span {
     background: none;
     border: none;
     border-bottom: 1px solid red;
@@ -89,6 +89,19 @@
     margin-top: -400px;
 
 }
+@media screen and (max-width: 1024px), screen and (max-height: 825px) {
+    #skiir-dialog {
+        width: auto;
+        left: 15px;
+        right: 15px;
+        top: 15px;
+        bottom: 15px;
+        margin: 0;
+        height: auto;
+        position: fixed;
+        overflow-y: auto;
+    }
+}
 
 #skiir-dialog #close {
     position: absolute;
@@ -107,26 +120,49 @@
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.8);
 }
-
-#skiir-dialog textarea {
-    width: 950px;
-    height: 80px;
+#skiir-dialog .row {
+    display: flex;
+    width: 100%;
 }
-
-#skiir-dialog #done {
-    background-color: rgba(105, 199, 155, 1);
-    border: 1px solid rgba(105, 199, 155, 0.5);
-    color: white;
-    border-radius: 5px;
+#skiir-dialog textarea {
+    width: 100%;
+}
+#skiir-dialog .skiir-button-prefix, #skiir-dialog textarea {
+    padding: 10px 30px;
+    height: 44px;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border: none;
+    background: #eee;
+}
+#skiir-dialog .votes {
+    padding: 10px 10px;
+}
+#skiir-dialog .skiir-button {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
     font-weight: bold;
     padding: 10px 30px;
 }
+#skiir-dialog #done, #skiir-dialog button.vote {
+    background-color: rgba(105, 199, 155, 1);
+    border: 1px solid rgba(105, 199, 155, 0.5);
+    color: white;
+}
+#skiir-dialog button.vote + span {
+    /* padding after vote button */
+    padding-left: 15px;
+}
+#skiir-dialog #skiir-dialog-ol .row {
+    /* aligns annotation text in the middle of the vote button */
+    align-items: center;
+}
+
 #skiir-dialog #done:hover {
     background-color: rgba(105, 199, 155, 0.5);
 }
 #skiir-dialog #context {
-    height: 63px;
-    overflow-y: scroll;
+    height: auto;
 }
 #skiir-dialog #context span {
     font-weight: bold;
@@ -150,6 +186,26 @@
     cursor: pointer;
     text-decoration: underline;
 }
-#skiir-dialog #snippets label [type="checkbox"] {
-    margin-right: 10px;
+#skiir-dialog #snippets label input, #skiir-dialog #relatedArticles label input {
+    zoom: 3;
+    margin-right: 15px;
+}
+
+#skiir-dialog-ol {
+    list-style-type: upper-roman;
+    text-align: left;
+}
+
+#relatedArticles {
+    text-align: left;
+}
+
+#relatedArticles h4 {
+    color: rgba(105, 199, 155, 1);
+}
+
+.skiir-dialog-title {
+    text-align: left;
+    font-size: 20pt;
+    line-height: 33pt;
 }

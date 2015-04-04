@@ -13,6 +13,14 @@ case class Request(id: Long, article_id: Long, text_surroundings: String, text: 
     "text_surroundings" -> text_surroundings,
     "date_asked"  -> date_asked
   )
+  def actionsJson = Json.obj(
+    "actions" -> Json.obj(
+      "self" -> controllers.routes.API.getRequestById(id).toString,
+      "annotate" -> controllers.routes.API.addAnnotation(id).toString,
+      "relatedArticles" -> controllers.routes.API.getRelatedArticlesOnRequest(id).toString,
+      "annotations" -> controllers.routes.API.getAnnotationsRequest(id).toString
+    )
+  )
 }
 
 object Request {
@@ -57,11 +65,16 @@ case class Annotation(id: Long, request_id: Long, article_id: Long, answer: Stri
     "votes"         -> votes,
     "references"    -> references
   )
+  def actionsJson = Json.obj(
+    "actions" -> Json.obj(
+      "vote" -> controllers.routes.API.voteAnnotation(request_id, article_id).toString
+    )
+  )
 }
 
 object Annotation {
   def fromRow(row: Row) = Annotation(
-    row[Long]("annoation_id"),
+    row[Long]("annotation_id"),
     row[Long]("request_id"),
     row[Long]("article_id"),
     row[String]("annotation_answer"),

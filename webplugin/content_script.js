@@ -1,6 +1,6 @@
 // Test Url:
 // http://www.bloomberg.com/news/articles/2015-03-15/germans-tired-of-greek-demands-want-country-to-exit-euro
-var baseUrl = 'http://145.94.157.167:9000'; // Herman's IP
+var baseUrl = 'http://127.0.0.1:9000'; // Herman's IP
 
 var testExReqs = [
   {
@@ -57,12 +57,17 @@ $.extend($.expr[':'], {
 var explanationRequests = [], explanations = [], actions;
 
 var dialogHtml =
-    '<h3></h3>'+
+    '<h3>Please explain this</h3>'+
     '<button id="close">&#x2716;</button>'+
     '<p id="context"></p>'+
-    '<textarea placeholder="write an explanation here"></textarea>'+
-    '<button id="done">Done</button>'+
-    '<div id="snippets"></div>'
+    '<div class="row">'+
+    '<textarea class="skiir-button-prefix" placeholder="Please explain the underlined text above"></textarea>'+
+    '<button id="done" class="skiir-button">Done</button>'+
+    '</div>'+
+    '<h3 class="skiir-dialog-title">Pick your sources:</h3>'+
+    '<div id="relatedArticles"></div>'+
+    '<h3 class="skiir-dialog-title">Or vote for one of these explanations:</h3>'+
+    '<div id="annotations"></div>'
     ;
 
 var dialog = document.createElement('dialog');
@@ -83,7 +88,7 @@ var dialog = document.createElement('dialog');
   };
   document.body.insertBefore(dialog, document.body.firstChild);
 
-  httpGet(baseUrl+"/articles/single", { url: window.location.href }, function(article) {
+  httpGet("/articles/single", { url: window.location.href }, function(article) {
     actions = article.links;
     show(article.requests, article.annotations);
   });
@@ -196,27 +201,95 @@ function updateExplanationRequest(exReq) {
   addExplanation(exReq);
 }
 
+function stringify(snip) {
+  result='';
+  var bolds = snip.bolds[0];
+  bolds.sort(function(a,b){return b[1]-a[1]}); //last one first
+  var start = snip.outer[0];
+  var result = snip.snip;
+  bolds.forEach(function(bold) {
+    result = [result.slice(0, bold[1] - start), '</b>', result.slice(bold[1] - start)].join('');
+    result = [result.slice(0, bold[0] - start), '<b>', result.slice(bold[0] - start)].join('');
+    console.log(result);
+  });
+  if (start != 0) result = "..." + result;
+  result +='...';
+
+  return result ;
+}
+
+// scrollParent is from Jquery-UI
+$.fn.scrollParent = function( includeHidden ) {
+  var position = this.css( "position" ),
+    excludeStaticParent = position === "absolute",
+    overflowRegex = includeHidden ? /(auto|scroll|hidden)/ : /(auto|scroll)/,
+    scrollParent = this.parents().filter( function() {
+      var parent = $( this );
+      if ( excludeStaticParent && parent.css( "position" ) === "static" ) {
+        return false;
+      }
+      return overflowRegex.test( parent.css( "overflow" ) + parent.css( "overflow-y" ) + parent.css( "overflow-x" ) );
+    } ).eq( 0 );
+
+  return position === "fixed" || !scrollParent.length ? $( this[ 0 ].ownerDocument || document ) : scrollParent;
+};
+$.fn.scrollView = function (duration) {
+  return this.each(function () {
+      $($(this).scrollParent()).get(0).scrollTop = $(this).offset().top - $($(this).scrollParent()).offset().top;
+  });
+}
+
 function openDialog(exReq) {
 
-  var highlight = '<span>'+exReq.text+'</span>';
+  var highlight = '<span id="exReqText">'+exReq.text+'</span>';
   dialog.showModal();
-  dialog.querySelector('h3').textContent = exReq.text;
+  //dialog.querySelector('h3').textContent = exReq.text;
   dialog.querySelector('p#context').innerHTML = exReq.text_surroundings.replace(exReq.text, highlight);
-
+  $("#exReqText").scrollView();
   // get snippets
   httpGet(exReq.actions.relatedArticles, null, function(data) {
     var snippetsHtml = '';
-
+    console.log(data);
     data.forEach(function(s) {
-      snippetsHtml += '<div>' + s.text + '<label><input type="checkbox" value="'+ s.reference +
-      '">add link</label></div>';
+      snippetsHtml += 
+        '<div class="row">'+
+          '<label><input type="checkbox" value="'+ s.reference +'"></label>'+
+          '<div>'+
+            '<a href="'+ s.url+'">'+
+            '<h4>'+ s.title.toUpperCase()+'</h4>'+
+            s.snippets.map(stringify).reduce(function(a,b){return a+b}, "")+
+            '</a></div>'+
+        '</div>';
+      console.log(s);
     });
 
-    dialog.querySelector('div#snippets').innerHTML = snippetsHtml;
+    dialog.querySelector('div#relatedArticles').innerHTML = snippetsHtml;
 
   });
 
+  httpGet(exReq.actions.annotations, null, function(data) {
+    var snippetsHtml = '<div id ="skiir-dialog-ol">';
+    data.sort(function(a,b) {return b.votes- a.votes});
+    data.forEach(function(s) {
+      var vote_url = s.actions.vote;
+      snippetsHtml += 
+        '<div class="row"><div class="skiir-button-prefix votes">'+s.votes+'</div>'+
+        '<button class="skiir-button vote" data-url="'+vote_url+'">Vote</button>'+
+        '<span>' + s.answer + '</span></div>';
+    });
+    snippetsHtml+= '</div>';
+    dialog.querySelector('div#annotations').innerHTML = snippetsHtml;
+  });
 
+  // Vote button functionality
+  $(dialog).on("click", "button.vote", function(){
+    var b = $(this);
+    $.post(baseUrl+b.attr('data-url'), null, function(){
+      b.prev(".votes").text(1+parseInt(b.prev(".votes").text()));
+    });
+  });
+
+  // Submitting of Annotation:
   dialog.querySelector('#done').onclick = function (e) {
 
     var references = [].map.call( // return all values from checked checkboxes
@@ -268,28 +341,37 @@ function getSelectionParentElement() {
   return parentEl;
 }
 
-// Message handler (from background.js)
+// Adding a Request via right-clicking:
 chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
-
-    // handle right click text selection requests
   if(req.details) {
     var exReq = req.details;
-
     console.debug("Send annotation request to server", exReq);
 
-    var url = actions.addRequest;
-    httpPost(baseUrl+"/requests", {
+    var postbody = {
       "article_url": window.location.href,
       "article_title": document.title,
       "article_text": document.querySelector('.article-body').textContent,
       "request_text": exReq.text,
       "request_text_surroundings": getSelectionParentElement().textContent
-    }, function(data) {
-        console.log("Saved at server");
-        console.log(data);
-        //addExplanationRequest(data);
-    });
+    };
+    var paragraph = getSelectionParentElement();
 
+    var url = actions.addRequest;
+    $.ajax({
+      url: baseUrl+"/requests", 
+      data: JSON.stringify(postbody), 
+      contentType: 'application/json', 
+      'type': 'POST'
+    }).done(function(data){
+      // The request was saved, now display annotation request:
+      $.getJSON(baseUrl+data.actions.self).done(function(exReq){
+        exReq.paragraph = paragraph;
+        addExplanationRequest(exReq);
+        //openDialog(exReq);
+      });
+    }).fail(function(){
+
+    });
     sendResponse({farewell: "goodbye"});
   }
 });
@@ -312,14 +394,14 @@ function httpGet(url, params, callback) {
   if(callback)
     httpRequest.onloadend = function() {callback(JSON.parse(httpRequest.responseText))};
 
-  httpRequest.open('GET', url, true);
+  httpRequest.open('GET', baseUrl + url, true);
   httpRequest.send();
 
 }
 
 function httpPost(url, data, callback) {
   var httpRequest = new XMLHttpRequest();
-  httpRequest.open("POST", url, true);
+  httpRequest.open("POST", baseUrl + url, true);
   httpRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
   httpRequest.send(JSON.stringify(data));
 
