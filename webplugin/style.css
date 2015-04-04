@@ -153,3 +153,20 @@
 #skiir-dialog #snippets label [type="checkbox"] {
     margin-right: 10px;
 }
+
+#skiir-dialog-ol {
+    list-style-type: upper-roman;
+    text-align: left;
+}
+
+#relatedArticles {
+    text-align: left;
+}
+
+#relatedArticles h4 {
+    color: rgba(105, 199, 155, 1);
+}
+
+.skiir-dialog-title {
+    font-size: 20pt;
+}

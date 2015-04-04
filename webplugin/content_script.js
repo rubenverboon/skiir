@@ -62,9 +62,9 @@ var dialogHtml =
     '<p id="context"></p>'+
     '<textarea placeholder="write an explanation here"></textarea>'+
     '<button id="done">Done</button>'+
-    '<h4>Annotations</h4>'+
+    '<h3 class="skiir-dialog-title">Annotations</h3>'+
     '<div id="annotations"></div>'+
-    '<h4>Related Articles</h4>'+
+    '<h3 class="skiir-dialog-title">Related Articles</h3>'+
     '<div id="relatedArticles"></div>'
     ;
 
@@ -239,10 +239,11 @@ function openDialog(exReq) {
   });
 
   httpGet(exReq.actions.annotations, null, function(data) {
-    var snippetsHtml = '<ol>';
+    var snippetsHtml = '<ol id ="skiir-dialog-ol">';
     console.log(data);
+    data.sort(function(a,b) {return b.votes- a.votes});
     data.forEach(function(s) {
-      snippetsHtml += '<li>'+ s.answer + '</li>';
+      snippetsHtml += '<li>'+ s.answer + ' ('+ s.votes+')</li>';
       console.log(s);
     });
     snippetsHtml+= '</ol>';
