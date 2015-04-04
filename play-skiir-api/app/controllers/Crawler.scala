@@ -121,7 +121,7 @@ object Crawler extends Controller {
       } yield DB.withConnection { implicit c =>
         (es ++ cs).map { case ae: ArticleLink =>
           // Find or insert Entity
-          val entity_id = SQL("SELECT entity_id FROM entity WHERE (entity_name LIKE {name} AND type LIKE {type}) OR dbpedia_url LIKE {dbpedia}").on(
+          val entity_id = SQL("SELECT entity_id FROM entity WHERE (entity_name LIKE {name} AND type LIKE {type}) OR dbpedia_url LIKE {dbpedia} LIMIT 1").on(
             'name -> ae.text,
             'dbpedia -> ae.dbpedia,
             'type -> ae.`type`
