@@ -199,7 +199,7 @@ LIMIT 4) AS c ON article.article_id = c.id"""()
           case Some(req) => Created(Json.obj(
             "actions" -> Json.obj(
               "annotate" -> routes.API.addAnnotation(req).toString,
-              "article" -> routes.API.getRelatedArticlesOnRequest(aid).toString
+              "article" -> routes.API.getRelatedArticlesOnRequest(req).toString
             )
           )).withHeaders("Location" -> (routes.API.singleArticle() + s"?id=$aid&req_id=$req"))
           case _ => BadRequest("Something went wrong while inserting request")
