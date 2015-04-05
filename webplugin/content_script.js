@@ -125,6 +125,14 @@ function show(requests, explanations) {
   //});
 }
 
+/**
+ * <span>
+ *   <button>phrase
+ *   <div>
+ *     <button>improve
+ *     <p>explanation
+ *     *<a>references
+ */
 function addExplanation(ex) {
   console.log(ex);
 
@@ -141,13 +149,17 @@ function addExplanation(ex) {
     }
     links += '</div>';
   }
-  var menu = '<div class="dropdown"><button>&#x2630;</button>'+
-  '<ul><li><a href="#">Improve</a></li><li><a href="#">Downvote</a></li></ul></div>';
 
-
-  span.innerHTML = '<div>' + menu + '<p>' + ex.explanation.answer + '</p>' + links + '</div>';
-  span.insertBefore(button, span.firstChild);
-  button.onclick = function(e) {toggleShow(span);};
+  var improveButton = document.createElement('button');
+  improveButton.textContent = 'Improve';
+  improveButton.className = 'improve';
+  improveButton.onclick = function() { openDialog(ex); };
+  var div = document.createElement('div');
+  div.innerHTML = '<p>' + ex.explanation.answer + '</p>' + links;
+  div.insertBefore(improveButton, div.firstChild);
+  span.appendChild(button);
+  span.appendChild(div);
+  button.onclick = function() {toggleShow(span);};
 
   try {
 

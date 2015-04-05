@@ -25,32 +25,12 @@
     font-style: italic;
     margin: 0 !important;
 }
-.skiir-explanation .dropdown {
+.skiir-explanation .improve {
     position: absolute;
-    right: 0;
-    top: 0;
-}
-.skiir-explanation .dropdown button {
+    right: 10px;
+    top: 10px;
     background-color: transparent;
     border: 1px solid grey;
-}
-.skiir-explanation .dropdown ul {
-    display: none;
-    position: absolute;
-    margin: 0;
-    list-style-type: none;
-    background-color: white;
-    border: 1px solid grey;
-    width: 100px;
-    right: 0;
-}
-.skiir-explanation .dropdown ul li a {
-    font-size: smaller;
-    border: none;
-    padding: 5px;
-}
-.skiir-explanation .dropdown ul li:before {
-    display: none;
 }
 .skiir-explanation .links {
 
