@@ -20,37 +20,18 @@
     padding: 10px;
     background-color: gainsboro;
     position: relative;
+    padding-right: 100px;
+    min-height: 55px;
 }
 .skiir-explanation p {
     font-style: italic;
     margin: 0 !important;
 }
-.skiir-explanation .dropdown {
+.skiir-explanation .improve {
     position: absolute;
-    right: 0;
-    top: 0;
-}
-.skiir-explanation .dropdown button {
-    background-color: transparent;
-    border: 1px solid grey;
-}
-.skiir-explanation .dropdown ul {
-    display: none;
-    position: absolute;
-    margin: 0;
-    list-style-type: none;
-    background-color: white;
-    border: 1px solid grey;
-    width: 100px;
-    right: 0;
-}
-.skiir-explanation .dropdown ul li a {
-    font-size: smaller;
-    border: none;
-    padding: 5px;
-}
-.skiir-explanation .dropdown ul li:before {
-    display: none;
+    right: 10px;
+    top: 10px;
+    padding: 3px 10px;
 }
 .skiir-explanation .links {
 
@@ -124,6 +105,9 @@
     display: flex;
     width: 100%;
 }
+#skiir-dialog .row + .row {
+    margin-top: 4px;
+}
 #skiir-dialog textarea {
     width: 100%;
 }
@@ -138,13 +122,16 @@
 #skiir-dialog .votes {
     padding: 10px 10px;
 }
-#skiir-dialog .skiir-button {
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
+.skiir-button {
+    border-radius: 5px;
     font-weight: bold;
     padding: 10px 30px;
 }
-#skiir-dialog #done, #skiir-dialog button.vote {
+.skiir-button-prefix + .skiir-button {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+#skiir-dialog #done, #skiir-dialog button.vote, .skiir-button-green {
     background-color: rgba(105, 199, 155, 1);
     border: 1px solid rgba(105, 199, 155, 0.5);
     color: white;
