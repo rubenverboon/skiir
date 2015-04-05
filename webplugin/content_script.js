@@ -317,6 +317,11 @@ function openDialog(exReq) {
 
   // Submitting of Annotation:
   dialog.querySelector('#done').onclick = function (e) {
+    var textarea = dialog.querySelector('textarea');
+
+    // Can't submit empty annotation
+    if(!textarea.value)
+      return;
 
     var references = [].map.call( // return all values from checked checkboxes
       dialog.querySelectorAll('[type="checkbox"]:checked'), function(obj) {
@@ -324,14 +329,14 @@ function openDialog(exReq) {
       });
 
     var postData = {
-      explanation: dialog.querySelector('textarea').value,
+      explanation: textarea.value,
       references: references
     };
+    textarea.value = "";
 
     console.info("Sending annotation to server", exReq.explanation);
 
     httpPost(exReq.actions.annotate, postData, function(data) {
-
       updateExplanationRequest(exReq);
 
       explanationRequests.filter(function (el) {
