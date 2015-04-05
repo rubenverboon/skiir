@@ -204,10 +204,9 @@ function updateExplanationRequest(exReq) {
 function stringify(snip) {
   result='';
   var bolds = snip.bolds[0];
-  bolds.sort(function(a,b){return b[1]-a[1]}); //last one first
   var start = snip.outer[0];
   var result = snip.snip;
-  bolds.forEach(function(bold) {
+  bolds.sort(function(a,b){return b[1]-a[1]}).forEach(function(bold) {
     result = [result.slice(0, bold[1] - start), '</b>', result.slice(bold[1] - start)].join('');
     result = [result.slice(0, bold[0] - start), '<b>', result.slice(bold[0] - start)].join('');
     console.log(result);
