@@ -118,13 +118,12 @@ function addExplanation(ex) {
     paragraph.appendChild(document.createTextNode(text[0]));
     paragraph.appendChild(span);
     paragraph.appendChild(document.createTextNode(text[1]));
-
+    span.querySelector('.dropdown button').onclick = function () {
+      toggleShow(span.querySelector('ul'));
+    };
   } catch (err) {
     console.error(err);
   }
-  span.querySelector('.dropdown button').onclick = function () {
-    toggleShow(span.querySelector('ul'));
-  };
 
   ex.span = span;
   explanations.push(ex);
