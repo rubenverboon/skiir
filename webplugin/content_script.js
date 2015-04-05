@@ -152,9 +152,10 @@ function addExplanation(ex) {
 
   var improveButton = document.createElement('button');
   improveButton.textContent = 'Improve';
-  improveButton.className = 'improve';
+  improveButton.className = 'skiir-button skiir-button-green improve';
   improveButton.onclick = function() { openDialog(ex); };
   var div = document.createElement('div');
+  div.className = "skiir-explanation-box"
   div.innerHTML = '<p>' + ex.explanation.answer + '</p>' + links;
   div.insertBefore(improveButton, div.firstChild);
   span.appendChild(button);
