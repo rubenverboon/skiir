@@ -308,6 +308,7 @@ function openDialog(exReq) {
   });
 
   // Vote button functionality
+  $(dialog).off("click", "button.vote");
   $(dialog).on("click", "button.vote", function(){
     var b = $(this);
     $.post(baseUrl+b.attr('data-url'), null, function(){
