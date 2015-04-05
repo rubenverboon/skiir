@@ -102,18 +102,31 @@ function show(requests, explanations) {
   // TODO: Bug! only 1 request per paragraph!
   requests.forEach(function(exReq){
     // search page for explanationRequest.text_surroundings
+
     exReq.paragraph = getParagraphOfText(exReq.text_surroundings, exReq.text);
-    // replace with button
-    addExplanationRequest(exReq);
+
+    var exs = explanations.filter(function(i) { return exReq.id === i.request_id});
+
+    if(exs.length) {
+      // get the explanation with the most votes
+      exReq.explanation =  exs.reduce(function(prev,curr) { return curr.votes > prev.votes ? curr : prev; });
+
+      addExplanation(exReq);
+    }
+    else {
+      addExplanationRequest(exReq);
+    }
   });
 
-  explanations.forEach(function(e){
-    e.paragraph = getParagraphOfText(e.text_surroundings, e.text);
-    addExplanation(e);
-  });
+  //explanations.forEach(function(e){
+
+    //e.req = getParagraphOfText(req.text_surroundings, req.text);
+    //addExplanation(e);
+  //});
 }
 
 function addExplanation(ex) {
+  console.log(ex);
 
   var span = document.createElement('span');
   var button = document.createElement('button');
@@ -121,10 +134,10 @@ function addExplanation(ex) {
 
   span.className = 'skiir-explanation';
   var links = '';
-  if(ex.links) {
+  if(ex.explanation.references) {
     links += '<div class="links">';
-    for(var key in ex.links) {
-      links += '<a href="'+ex.links[key]+'">['+key+']</a>';
+    for(var key in ex.explanation.references) {
+      links += '<a href="'+ex.explanation.references[key]+'">['+key+']</a>';
     }
     links += '</div>';
   }
@@ -132,7 +145,7 @@ function addExplanation(ex) {
   '<ul><li><a href="#">Improve</a></li><li><a href="#">Downvote</a></li></ul></div>';
 
 
-  span.innerHTML = '<div>' + menu + '<p>' + ex.explanation + '</p>' + links + '</div>';
+  span.innerHTML = '<div>' + menu + '<p>' + ex.explanation.answer + '</p>' + links + '</div>';
   span.insertBefore(button, span.firstChild);
   button.onclick = function(e) {toggleShow(span);};
 
@@ -148,7 +161,7 @@ function addExplanation(ex) {
     paragraph.appendChild(document.createTextNode(text[1]));
 
   } catch(err){
-    console.log(err);
+    console.error(err);
   }
   span.querySelector('.dropdown button').onclick = function() {
     toggleShow(span.querySelector('ul'));
@@ -167,10 +180,11 @@ function toggleShow(span) {
 }
 
 function addExplanationRequest(exReq) {
+
   var button = document.createElement('button');
   button.className = 'skiir-help';
   button.textContent = exReq.text;
-  console.log(exReq);
+  //console.log(exReq);
   button.onclick = function() { openDialog(exReq) };
 
   try {
@@ -186,7 +200,7 @@ function addExplanationRequest(exReq) {
 
   }
   catch(err){
-    console.log(err);
+    console.error(err);
   }
   exReq.button = button;
   explanationRequests.push(exReq);
@@ -210,7 +224,7 @@ function stringify(snip) {
   bolds.forEach(function(bold) {
     result = [result.slice(0, bold[1] - start), '</b>', result.slice(bold[1] - start)].join('');
     result = [result.slice(0, bold[0] - start), '<b>', result.slice(bold[0] - start)].join('');
-    console.log(result);
+    //console.log(result);
   });
   if (start != 0) result = "..." + result;
   result +='...';
@@ -237,7 +251,7 @@ $.fn.scrollView = function (duration) {
   return this.each(function () {
       $($(this).scrollParent()).get(0).scrollTop = $(this).offset().top - $($(this).scrollParent()).offset().top;
   });
-}
+};
 
 function openDialog(exReq) {
 
@@ -249,7 +263,7 @@ function openDialog(exReq) {
   // get snippets
   httpGet(exReq.actions.relatedArticles, null, function(data) {
     var snippetsHtml = '';
-    console.log(data);
+    //console.log(data);
     data.forEach(function(s) {
       snippetsHtml += 
         '<div class="row">'+
@@ -260,7 +274,7 @@ function openDialog(exReq) {
             s.snippets.map(stringify).reduce(function(a,b){return a+b}, "")+
             '</a></div>'+
         '</div>';
-      console.log(s);
+      //console.log(s);
     });
 
     dialog.querySelector('div#relatedArticles').innerHTML = snippetsHtml;
