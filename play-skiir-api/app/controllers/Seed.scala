@@ -8,13 +8,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object Seed extends Controller {
 
   def seed = Action.async {
-    val req = WS.url(routes.API.addRequestForArticleUrl.url)
+    val req = WS.url(api.routes.Requests.addRequestForArticleUrl.url)
       .withBody("""{
                    |"article_url": "https://hermanbanken.nl/2015/03/01/newrelic-causing-outofmemoryerror/",
                    |"request_text": "Ipsum",
                    |"request_text_surroundings": "Lorum Ipsum Dolor"
                    |}""".stripMargin)
-      .execute(routes.API.addRequestForArticleUrl.method)
+      .execute(api.routes.Requests.addRequestForArticleUrl.method)
     req.map(_ => Ok("Seeded!"))
   }
 

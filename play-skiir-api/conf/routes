@@ -7,19 +7,19 @@ OPTIONS        /*path                                      controllers.Applicati
 # Home page
 GET            /                                           controllers.Application.index
 
-GET            /requests                                   controllers.API.requests
-POST           /requests                                   controllers.API.addRequestForArticleUrl
-GET            /requests/:rid                              controllers.API.getRequestById(rid: Long)
-POST           /requests/:rid/annotations                  controllers.API.addAnnotation(rid: Long)
-POST           /requests/:rid/annotations/:eid/vote        controllers.API.voteAnnotation(rid: Long,eid: Long)
-GET            /requests/:rid/relatedArticles              controllers.API.getRelatedArticlesOnRequest(rid: Long)
-GET            /requests/:rid/annotations                  controllers.API.getAnnotationsRequest(rid: Long)
+GET            /requests                                   controllers.api.Requests.requests
+POST           /requests                                   controllers.api.Requests.addRequestForArticleUrl
+GET            /requests/:rid                              controllers.api.Requests.getRequestById(rid: Long)
+POST           /requests/:rid/annotations                  controllers.api.Annotations.addAnnotation(rid: Long)
+POST           /requests/:rid/annotations/:eid/vote        controllers.api.Annotations.voteAnnotation(rid: Long,eid: Long)
+GET            /requests/:rid/relatedArticles              controllers.api.Articles.getRelatedArticlesOfRequest(rid: Long)
+GET            /requests/:rid/annotations                  controllers.api.Annotations.getAnnotationOfRequest(rid: Long)
 
-GET            /articles                                   controllers.API.articles
-GET            /articles/single                            controllers.API.singleArticle
-GET            /articles/:id                               controllers.API.articleById(id: Long)
-POST           /articles/:id/requests                      controllers.API.addRequestToArticle(id: Long)
-GET            /articles/related/:id                       controllers.API.getRelatedArticles(id: Long)
+GET            /articles                                   controllers.api.Articles.articles
+GET            /articles/single                            controllers.api.Articles.articleByUrl(url)
+GET            /articles/:id                               controllers.api.Articles.articleById(id: Long)
+POST           /articles/:id/requests                      controllers.api.Requests.addRequestToArticle(id: Long)
+GET            /articles/related/:id                       controllers.api.Articles.getRelatedArticles(id: Long)
 
 GET            /explain/:text                              controllers.Crawler.explain(text: String)
 

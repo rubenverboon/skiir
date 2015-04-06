@@ -7,6 +7,7 @@ import java.util.Date
 
 import anorm.SqlParser._
 import anorm._
+import controllers.api.Articles
 import models.{ArticleLink, ArticleConcept, ArticleEntity}
 import org.joda.time.LocalDate
 import play.api.Play.current
@@ -57,7 +58,7 @@ object Crawler extends Controller {
    * @return article id
    */
   def scrapeArticle(url: String) : Future[Long] = {
-    val dbUrl = url.take(API.articleUrlLength)
+    val dbUrl = url.take(Articles.articleUrlLength)
 
     // Check if we already scraped this article
     val existing = DB.withConnection { implicit c =>
@@ -104,7 +105,7 @@ object Crawler extends Controller {
         // Insert article
         SQL("INSERT INTO article (article_url, article_title, article_text, article_date, date_added) VALUES ({url}, {title}, {text}, {article_date}, {date_added})").on(
           'url -> dbUrl,
-          'title -> url.split('/').last.replace("-", " ").take(API.articleTitleLength),
+          'title -> url.split('/').last.replace("-", " ").take(Articles.articleTitleLength),
           'text -> (json \ "text").as[String],
           'article_date -> (url match {
             case DateRegex(y, m, d) => Some(LocalDate.parse(s"$y-$m-$d").toDate)
