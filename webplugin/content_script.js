@@ -4,13 +4,12 @@ var annotations = [], actions;
 
 var dialog = document.createElement('dialog');
 
-// START: document onReady
+// START of the program: document onReady
 (function () {
-  //insert dialog
   insertDialog();
 
   // get requests and annotations from the server and add them to the dom
-  httpGet("/articles/single", {url: window.location.href}, function (article) {
+  $.getJSON(baseUrl + '/articles/single', {url: window.location.href}).done(function(article) {
     actions = article.links;
     annotations = article.annotations;
     insertRequestsAndAnnotations(article.requests);
@@ -18,7 +17,6 @@ var dialog = document.createElement('dialog');
 })();
 
 function insertDialog() {
-
   dialog.innerHTML =
     '<h3>Please explain this</h3>' +
     '<button id="close">&#x2716;</button>' +
@@ -70,7 +68,7 @@ function insertRequestsAndAnnotations(requests) {
 }
 
 /**
- * Inserts an Annotation into the DOM in the following form:
+ * Inserts an Annotation into the DOM in the following markup:
  *
  * <span>
  *   <button>phrase
@@ -116,30 +114,9 @@ function insertAnnotation(req) {
   span.appendChild(button);
   span.appendChild(div);
 
-  try {
-
-    var paragraph = req.paragraph;
-    var text = paragraph.innerHTML.split(req.text);
-
-    while (paragraph.firstChild) paragraph.removeChild(paragraph.firstChild);
-
-    paragraph.insertAdjacentHTML('afterbegin', text[0]);
-    paragraph.appendChild(span);
-    paragraph.insertAdjacentHTML('beforeend', text[1]);
-
-  } catch (err) {
-    console.error(err);
-  }
+  replaceTextInParagraphWith(req.text, req.paragraph, span);
 
   req.span = span;
-}
-
-function toggleShow(span) {
-  if (span.classList.contains('show')) {
-    span.classList.remove('show');
-  } else {
-    span.classList.add('show');
-  }
 }
 
 /**
@@ -157,21 +134,8 @@ function insertRequest(req) {
     openDialog(req)
   };
 
-  try {
+  replaceTextInParagraphWith(req.text, req.paragraph, button);
 
-    var paragraph = req.paragraph;
-    var text = paragraph.innerHTML.split(req.text);
-
-    while (paragraph.firstChild) paragraph.removeChild(paragraph.firstChild);
-
-    paragraph.insertAdjacentHTML('afterbegin', text[0]);
-    paragraph.appendChild(button);
-    paragraph.insertAdjacentHTML('beforeend', text[1]);
-
-  }
-  catch (err) {
-    console.error(err);
-  }
   req.button = button;
 }
 
@@ -197,6 +161,37 @@ function upgradeRequestToAnnotation(req) {
     delete req.button;
 
     insertAnnotation(req);
+  }
+}
+
+
+/**
+ * Replaces a string within a paragraph with an html element
+ * @param text
+ * @param paragraph
+ * @param element
+ */
+function replaceTextInParagraphWith(text, paragraph, element) {
+  try {
+
+    var splittedText = paragraph.innerHTML.split(text);
+
+    while (paragraph.firstChild) paragraph.removeChild(paragraph.firstChild);
+
+    paragraph.insertAdjacentHTML('afterbegin', splittedText[0]);
+    paragraph.appendChild(element);
+    paragraph.insertAdjacentHTML('beforeend', splittedText[1]);
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function toggleShow(span) {
+  if (span.classList.contains('show')) {
+    span.classList.remove('show');
+  } else {
+    span.classList.add('show');
   }
 }
 
@@ -230,7 +225,9 @@ function openDialog(req) {
   $("#exReqText").scrollView();
 
   // get related articles for snippets
-  httpGet(req.actions.relatedArticles, null, function (data) {
+  $.getJSON(baseUrl + req.actions.relatedArticles)
+  .done(function (data) {
+
     var snippetsHtml = '';
     data.forEach(function (s) {
       snippetsHtml +=
@@ -251,7 +248,8 @@ function openDialog(req) {
   });
 
   // get annotations for vote buttons
-  httpGet(req.actions.annotations, null, function (data) {
+  $.getJSON(baseUrl + req.actions.annotations)
+  .done(function (data) {
     var snippetsHtml = '<div id ="skiir-dialog-ol">';
     data.sort(function (a, b) {
       return b.votes - a.votes
@@ -382,29 +380,6 @@ chrome.runtime.onMessage.addListener(function (req, sender, sendResponse) {
 ///////////////
 // Utilities //
 ///////////////
-function httpGet(url, params, callback) {
-
-  function serialize(obj) {
-    var str = [];
-    for (var p in obj)
-      if (obj.hasOwnProperty(p)) {
-        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
-      }
-    return str.join("&");
-  }
-
-  if (params) url += '?' + serialize(params);
-
-  var httpRequest = new XMLHttpRequest();
-
-  if (callback)
-    httpRequest.onloadend = function () {
-      callback(JSON.parse(httpRequest.responseText), httpRequest);
-    };
-  httpRequest.open('GET', baseUrl + url, true);
-  httpRequest.send();
-
-}
 
 function httpPost(url, data, callback) {
   var httpRequest = new XMLHttpRequest();
