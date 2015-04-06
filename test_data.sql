@@ -9,15 +9,59 @@ SET standard_conforming_strings = on;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
 
+SET search_path = public, pg_catalog;
+
+ALTER TABLE ONLY public.request DROP CONSTRAINT request_article_id_fkey;
+ALTER TABLE ONLY public.entity_article DROP CONSTRAINT entity_article_entity_id_fkey;
+ALTER TABLE ONLY public.entity_article DROP CONSTRAINT entity_article_article_id_fkey;
+ALTER TABLE ONLY public.annotation DROP CONSTRAINT annotation_request_id_fkey;
+ALTER TABLE ONLY public.annotation DROP CONSTRAINT annotation_article_id_fkey;
+ALTER TABLE ONLY public.request DROP CONSTRAINT request_pkey;
+ALTER TABLE ONLY public.play_evolutions DROP CONSTRAINT play_evolutions_pkey;
+ALTER TABLE ONLY public.entity DROP CONSTRAINT entity_pkey;
+ALTER TABLE ONLY public.entity DROP CONSTRAINT entity_entity_name_type_key;
+ALTER TABLE ONLY public.entity_article DROP CONSTRAINT entity_article_pkey;
+ALTER TABLE ONLY public.article DROP CONSTRAINT article_pkey;
+ALTER TABLE ONLY public.annotation DROP CONSTRAINT annotation_pkey;
+ALTER TABLE public.request ALTER COLUMN request_id DROP DEFAULT;
+ALTER TABLE public.entity ALTER COLUMN entity_id DROP DEFAULT;
+ALTER TABLE public.article ALTER COLUMN article_id DROP DEFAULT;
+ALTER TABLE public.annotation ALTER COLUMN annotation_id DROP DEFAULT;
+DROP SEQUENCE public.request_request_id_seq;
+DROP TABLE public.request;
+DROP TABLE public.play_evolutions;
+DROP SEQUENCE public.entity_entity_id_seq;
+DROP TABLE public.entity_article;
+DROP TABLE public.entity;
+DROP SEQUENCE public.article_article_id_seq;
+DROP TABLE public.article;
+DROP SEQUENCE public.annotation_annotation_id_seq;
+DROP TABLE public.annotation;
+DROP EXTENSION plpgsql;
+DROP SCHEMA public;
 --
--- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA public;
+
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA public IS 'standard public schema';
+
+
+--
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: -
 --
 
 CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 
 --
--- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
@@ -30,7 +74,7 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: annotation; Type: TABLE; Schema: public; Owner: testuser; Tablespace: 
+-- Name: annotation; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE annotation (
@@ -44,10 +88,8 @@ CREATE TABLE annotation (
 );
 
 
-ALTER TABLE annotation OWNER TO testuser;
-
 --
--- Name: annotation_annotation_id_seq; Type: SEQUENCE; Schema: public; Owner: testuser
+-- Name: annotation_annotation_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE annotation_annotation_id_seq
@@ -58,17 +100,15 @@ CREATE SEQUENCE annotation_annotation_id_seq
     CACHE 1;
 
 
-ALTER TABLE annotation_annotation_id_seq OWNER TO testuser;
-
 --
--- Name: annotation_annotation_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: testuser
+-- Name: annotation_annotation_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE annotation_annotation_id_seq OWNED BY annotation.annotation_id;
 
 
 --
--- Name: article; Type: TABLE; Schema: public; Owner: testuser; Tablespace: 
+-- Name: article; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE article (
@@ -81,10 +121,8 @@ CREATE TABLE article (
 );
 
 
-ALTER TABLE article OWNER TO testuser;
-
 --
--- Name: article_article_id_seq; Type: SEQUENCE; Schema: public; Owner: testuser
+-- Name: article_article_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE article_article_id_seq
@@ -95,17 +133,15 @@ CREATE SEQUENCE article_article_id_seq
     CACHE 1;
 
 
-ALTER TABLE article_article_id_seq OWNER TO testuser;
-
 --
--- Name: article_article_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: testuser
+-- Name: article_article_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE article_article_id_seq OWNED BY article.article_id;
 
 
 --
--- Name: entity; Type: TABLE; Schema: public; Owner: testuser; Tablespace: 
+-- Name: entity; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE entity (
@@ -116,10 +152,8 @@ CREATE TABLE entity (
 );
 
 
-ALTER TABLE entity OWNER TO testuser;
-
 --
--- Name: entity_article; Type: TABLE; Schema: public; Owner: testuser; Tablespace: 
+-- Name: entity_article; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE entity_article (
@@ -131,10 +165,8 @@ CREATE TABLE entity_article (
 );
 
 
-ALTER TABLE entity_article OWNER TO testuser;
-
 --
--- Name: entity_entity_id_seq; Type: SEQUENCE; Schema: public; Owner: testuser
+-- Name: entity_entity_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE entity_entity_id_seq
@@ -145,17 +177,15 @@ CREATE SEQUENCE entity_entity_id_seq
     CACHE 1;
 
 
-ALTER TABLE entity_entity_id_seq OWNER TO testuser;
-
 --
--- Name: entity_entity_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: testuser
+-- Name: entity_entity_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE entity_entity_id_seq OWNED BY entity.entity_id;
 
 
 --
--- Name: play_evolutions; Type: TABLE; Schema: public; Owner: testuser; Tablespace: 
+-- Name: play_evolutions; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE play_evolutions (
@@ -169,10 +199,8 @@ CREATE TABLE play_evolutions (
 );
 
 
-ALTER TABLE play_evolutions OWNER TO testuser;
-
 --
--- Name: request; Type: TABLE; Schema: public; Owner: testuser; Tablespace: 
+-- Name: request; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE request (
@@ -184,10 +212,8 @@ CREATE TABLE request (
 );
 
 
-ALTER TABLE request OWNER TO testuser;
-
 --
--- Name: request_request_id_seq; Type: SEQUENCE; Schema: public; Owner: testuser
+-- Name: request_request_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE request_request_id_seq
@@ -198,45 +224,43 @@ CREATE SEQUENCE request_request_id_seq
     CACHE 1;
 
 
-ALTER TABLE request_request_id_seq OWNER TO testuser;
-
 --
--- Name: request_request_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: testuser
+-- Name: request_request_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE request_request_id_seq OWNED BY request.request_id;
 
 
 --
--- Name: annotation_id; Type: DEFAULT; Schema: public; Owner: testuser
+-- Name: annotation_id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY annotation ALTER COLUMN annotation_id SET DEFAULT nextval('annotation_annotation_id_seq'::regclass);
 
 
 --
--- Name: article_id; Type: DEFAULT; Schema: public; Owner: testuser
+-- Name: article_id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY article ALTER COLUMN article_id SET DEFAULT nextval('article_article_id_seq'::regclass);
 
 
 --
--- Name: entity_id; Type: DEFAULT; Schema: public; Owner: testuser
+-- Name: entity_id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY entity ALTER COLUMN entity_id SET DEFAULT nextval('entity_entity_id_seq'::regclass);
 
 
 --
--- Name: request_id; Type: DEFAULT; Schema: public; Owner: testuser
+-- Name: request_id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY request ALTER COLUMN request_id SET DEFAULT nextval('request_request_id_seq'::regclass);
 
 
 --
--- Data for Name: annotation; Type: TABLE DATA; Schema: public; Owner: testuser
+-- Data for Name: annotation; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY annotation (annotation_id, request_id, article_id, annotation_answer, date_answered, votes, refs) FROM stdin;
@@ -246,14 +270,14 @@ COPY annotation (annotation_id, request_id, article_id, annotation_answer, date_
 
 
 --
--- Name: annotation_annotation_id_seq; Type: SEQUENCE SET; Schema: public; Owner: testuser
+-- Name: annotation_annotation_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('annotation_annotation_id_seq', 22, true);
 
 
 --
--- Data for Name: article; Type: TABLE DATA; Schema: public; Owner: testuser
+-- Data for Name: article; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY article (article_id, article_url, article_title, article_text, article_date, date_added) FROM stdin;
@@ -269,14 +293,14 @@ COPY article (article_id, article_url, article_title, article_text, article_date
 
 
 --
--- Name: article_article_id_seq; Type: SEQUENCE SET; Schema: public; Owner: testuser
+-- Name: article_article_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('article_article_id_seq', 15, true);
 
 
 --
--- Data for Name: entity; Type: TABLE DATA; Schema: public; Owner: testuser
+-- Data for Name: entity; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY entity (entity_id, entity_name, dbpedia_url, type) FROM stdin;
@@ -566,7 +590,7 @@ COPY entity (entity_id, entity_name, dbpedia_url, type) FROM stdin;
 
 
 --
--- Data for Name: entity_article; Type: TABLE DATA; Schema: public; Owner: testuser
+-- Data for Name: entity_article; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY entity_article (article_id, entity_id, relevance, count, text) FROM stdin;
@@ -902,14 +926,14 @@ COPY entity_article (article_id, entity_id, relevance, count, text) FROM stdin;
 
 
 --
--- Name: entity_entity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: testuser
+-- Name: entity_entity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('entity_entity_id_seq', 555, true);
 
 
 --
--- Data for Name: play_evolutions; Type: TABLE DATA; Schema: public; Owner: testuser
+-- Data for Name: play_evolutions; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY play_evolutions (id, hash, applied_at, apply_script, revert_script, state, last_problem) FROM stdin;
@@ -920,7 +944,7 @@ COPY play_evolutions (id, hash, applied_at, apply_script, revert_script, state, 
 
 
 --
--- Data for Name: request; Type: TABLE DATA; Schema: public; Owner: testuser
+-- Data for Name: request; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY request (request_id, article_id, request_text_surroundings, request_text, date_asked) FROM stdin;
@@ -929,14 +953,14 @@ COPY request (request_id, article_id, request_text_surroundings, request_text, d
 
 
 --
--- Name: request_request_id_seq; Type: SEQUENCE SET; Schema: public; Owner: testuser
+-- Name: request_request_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('request_request_id_seq', 22, true);
 
 
 --
--- Name: annotation_pkey; Type: CONSTRAINT; Schema: public; Owner: testuser; Tablespace: 
+-- Name: annotation_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY annotation
@@ -944,7 +968,7 @@ ALTER TABLE ONLY annotation
 
 
 --
--- Name: article_pkey; Type: CONSTRAINT; Schema: public; Owner: testuser; Tablespace: 
+-- Name: article_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY article
@@ -952,7 +976,7 @@ ALTER TABLE ONLY article
 
 
 --
--- Name: entity_article_pkey; Type: CONSTRAINT; Schema: public; Owner: testuser; Tablespace: 
+-- Name: entity_article_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY entity_article
@@ -960,7 +984,7 @@ ALTER TABLE ONLY entity_article
 
 
 --
--- Name: entity_entity_name_type_key; Type: CONSTRAINT; Schema: public; Owner: testuser; Tablespace: 
+-- Name: entity_entity_name_type_key; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY entity
@@ -968,7 +992,7 @@ ALTER TABLE ONLY entity
 
 
 --
--- Name: entity_pkey; Type: CONSTRAINT; Schema: public; Owner: testuser; Tablespace: 
+-- Name: entity_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY entity
@@ -976,7 +1000,7 @@ ALTER TABLE ONLY entity
 
 
 --
--- Name: play_evolutions_pkey; Type: CONSTRAINT; Schema: public; Owner: testuser; Tablespace: 
+-- Name: play_evolutions_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY play_evolutions
@@ -984,7 +1008,7 @@ ALTER TABLE ONLY play_evolutions
 
 
 --
--- Name: request_pkey; Type: CONSTRAINT; Schema: public; Owner: testuser; Tablespace: 
+-- Name: request_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY request
@@ -992,7 +1016,7 @@ ALTER TABLE ONLY request
 
 
 --
--- Name: annotation_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: testuser
+-- Name: annotation_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY annotation
@@ -1000,7 +1024,7 @@ ALTER TABLE ONLY annotation
 
 
 --
--- Name: annotation_request_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: testuser
+-- Name: annotation_request_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY annotation
@@ -1008,7 +1032,7 @@ ALTER TABLE ONLY annotation
 
 
 --
--- Name: entity_article_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: testuser
+-- Name: entity_article_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY entity_article
@@ -1016,7 +1040,7 @@ ALTER TABLE ONLY entity_article
 
 
 --
--- Name: entity_article_entity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: testuser
+-- Name: entity_article_entity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY entity_article
@@ -1024,21 +1048,11 @@ ALTER TABLE ONLY entity_article
 
 
 --
--- Name: request_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: testuser
+-- Name: request_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY request
     ADD CONSTRAINT request_article_id_fkey FOREIGN KEY (article_id) REFERENCES article(article_id);
-
-
---
--- Name: public; Type: ACL; Schema: -; Owner: korsvanloon
---
-
-REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM korsvanloon;
-GRANT ALL ON SCHEMA public TO korsvanloon;
-GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
