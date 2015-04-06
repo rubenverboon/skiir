@@ -7,7 +7,7 @@ import controllers.api.Articles._
 import models.Annotation
 import play.api.Play.current
 import play.api.db.DB
-import play.api.libs.json.JsArray
+import play.api.libs.json.{Json, JsArray}
 import play.api.mvc._
 
 object Annotations {
@@ -39,7 +39,11 @@ object Annotations {
           'date -> new Date(),
           'refs -> (json \ "references").toString
         ).executeInsert[Option[Long]]()
-      Created("").withHeaders("Location" -> s"requests/$rid/annotations/$id")
+      Created(Json.obj(
+        "actions" -> Json.obj(
+          "siblings" -> controllers.api.routes.Annotations.getAnnotationOfRequest(rid).toString
+        )
+      ))
     } getOrElse noJsonBody
   }}
 

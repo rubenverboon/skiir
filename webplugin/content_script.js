@@ -1,15 +1,24 @@
 var baseUrl = 'http://127.0.0.1:9000'; // enter IP
 
-$.extend($.expr[':'], {
-  containsEscaped: function (el, index, m) {
-    var s = unescape(m[3]).replace(/[\s\n]+/g, " ").trim();
-    return $(el).text().replace(/[\s\n]+/g, " ").indexOf(s) >= 0;
-  }
-});
-
 var explanationRequests = [], explanations = [], actions;
 
-var dialogHtml =
+var dialog = document.createElement('dialog');
+
+// START: document onReady
+(function () {
+  //insert dialog
+  insertDialog();
+
+  // get requests and annotations from the server and add them to the dom
+  httpGet("/articles/single", {url: window.location.href}, function (article) {
+    actions = article.links;
+    show(article.requests, article.annotations);
+  });
+})();
+
+function insertDialog() {
+
+  dialog.innerHTML =
     '<h3>Please explain this</h3>' +
     '<button id="close">&#x2716;</button>' +
     '<p id="context"></p>' +
@@ -20,26 +29,13 @@ var dialogHtml =
     '<h3 class="skiir-dialog-title">Pick your sources:</h3>' +
     '<div id="relatedArticles"></div>' +
     '<h3 class="skiir-dialog-title">Or vote for one of these explanations:</h3>' +
-    '<div id="annotations"></div>'
-  ;
-
-var dialog = document.createElement('dialog');
-
-// START: document onReady
-(function () {
-  //insert dialog
-  dialog.innerHTML = dialogHtml;
+    '<div id="annotations"></div>';
   dialog.id = "skiir-dialog";
   dialog.querySelector('#close').onclick = function (e) {
     dialog.close();
   };
   document.body.insertBefore(dialog, document.body.firstChild);
-
-  httpGet("/articles/single", {url: window.location.href}, function (article) {
-    actions = article.links;
-    show(article.requests, article.annotations);
-  });
-})();
+}
 
 function show(requests, explanations) {
   // update de DOM met buttons en explanation components
@@ -58,7 +54,6 @@ function show(requests, explanations) {
       exReq.explanation = exs.reduce(function (prev, curr) {
         return curr.votes > prev.votes ? curr : prev;
       });
-
       addExplanation(exReq);
     }
     else {
@@ -74,9 +69,10 @@ function show(requests, explanations) {
  *     <button>improve
  *     <p>explanation
  *     *<a>references
+ *
+ * @param ex Explanation
  */
 function addExplanation(ex) {
-  console.log(ex);
 
   var span = document.createElement('span');
   var button = document.createElement('button');
@@ -115,12 +111,10 @@ function addExplanation(ex) {
 
     while (paragraph.firstChild) paragraph.removeChild(paragraph.firstChild);
 
-    paragraph.appendChild(document.createTextNode(text[0]));
+    paragraph.insertAdjacentHTML('afterbegin', text[0]);
     paragraph.appendChild(span);
-    paragraph.appendChild(document.createTextNode(text[1]));
-    span.querySelector('.dropdown button').onclick = function () {
-      toggleShow(span.querySelector('ul'));
-    };
+    paragraph.insertAdjacentHTML('beforeend', text[1]);
+
   } catch (err) {
     console.error(err);
   }
@@ -137,12 +131,15 @@ function toggleShow(span) {
   }
 }
 
+/**
+ * <button>phrase
+ * @param exReq Explanation Request object
+ */
 function addExplanationRequest(exReq) {
 
   var button = document.createElement('button');
   button.className = 'skiir-help';
   button.textContent = exReq.text;
-  //console.log(exReq);
   button.onclick = function () {
     openDialog(exReq)
   };
@@ -154,9 +151,9 @@ function addExplanationRequest(exReq) {
 
     while (paragraph.firstChild) paragraph.removeChild(paragraph.firstChild);
 
-    paragraph.appendChild(document.createTextNode(text[0]));
+    paragraph.insertAdjacentHTML('afterbegin', text[0]);
     paragraph.appendChild(button);
-    paragraph.appendChild(document.createTextNode(text[1]));
+    paragraph.insertAdjacentHTML('beforeend', text[1]);
 
   }
   catch (err) {
@@ -168,11 +165,22 @@ function addExplanationRequest(exReq) {
 
 function updateExplanationRequest(exReq) {
 
-  exReq.paragraph.innerHTML = exReq.paragraph.innerHTML.replace(exReq.button.outerHTML, exReq.text);
+  var exs = explanations.filter(function (i) {
+    return exReq.id === i.request_id
+  });
 
-  delete exReq.button;
+  if (exs.length) {
+    // get the explanation with the most votes
+    exReq.explanation = exs.reduce(function (prev, curr) {
+      return curr.votes > prev.votes ? curr : prev;
+    });
 
-  addExplanation(exReq);
+    exReq.paragraph.innerHTML = exReq.paragraph.innerHTML.replace(exReq.button.outerHTML, exReq.text);
+
+    delete exReq.button;
+
+    addExplanation(exReq);
+  }
 }
 
 function stringify(snip) {
@@ -185,7 +193,6 @@ function stringify(snip) {
   }).forEach(function (bold) {
     result = [result.slice(0, bold[1] - start), '</b>', result.slice(bold[1] - start)].join('');
     result = [result.slice(0, bold[0] - start), '<b>', result.slice(bold[0] - start)].join('');
-    //console.log(result);
   });
   if (start != 0) result = "..." + result;
   result += '...';
@@ -193,40 +200,20 @@ function stringify(snip) {
   return result;
 }
 
-// scrollParent is from Jquery-UI
-$.fn.scrollParent = function (includeHidden) {
-  var position = this.css("position"),
-    excludeStaticParent = position === "absolute",
-    overflowRegex = includeHidden ? /(auto|scroll|hidden)/ : /(auto|scroll)/,
-    scrollParent = this.parents().filter(function () {
-      var parent = $(this);
-      if (excludeStaticParent && parent.css("position") === "static") {
-        return false;
-      }
-      return overflowRegex.test(parent.css("overflow") + parent.css("overflow-y") + parent.css("overflow-x"));
-    }).eq(0);
-
-  return position === "fixed" || !scrollParent.length ? $(this[0].ownerDocument || document) : scrollParent;
-};
-$.fn.scrollView = function (duration) {
-  return this.each(function () {
-    $($(this).scrollParent()).get(0).scrollTop = $(this).offset().top - $($(this).scrollParent()).offset().top;
-  });
-};
-
 function openDialog(exReq) {
 
   var highlight = '<span id="exReqText">' + exReq.text + '</span>';
   dialog.showModal();
   dialog.querySelector('p#context').innerHTML = exReq.text_surroundings.replace(exReq.text, highlight);
   $("#exReqText").scrollView();
-  // get snippets
+
+  // get related articles for snippets
   httpGet(exReq.actions.relatedArticles, null, function (data) {
     var snippetsHtml = '';
     data.forEach(function (s) {
       snippetsHtml +=
         '<div class="row">' +
-        '<label><input type="checkbox" value="' + s.reference + '"></label>' +
+        '<label><input type="checkbox" value="' + s.url + '"></label>' +
         '<div>' +
         '<a href="' + s.url + '">' +
         '<h4>' + s.title.toUpperCase() + '</h4>' +
@@ -241,6 +228,7 @@ function openDialog(exReq) {
 
   });
 
+  // get annotations for vote buttons
   httpGet(exReq.actions.annotations, null, function (data) {
     var snippetsHtml = '<div id ="skiir-dialog-ol">';
     data.sort(function (a, b) {
@@ -283,17 +271,18 @@ function openDialog(exReq) {
       explanation: textarea.value,
       references: references
     };
+    console.info("Sending annotation to server", textarea.value);
+
     textarea.value = "";
 
-    console.info("Sending annotation to server", exReq.explanation);
-
     httpPost(exReq.actions.annotate, postData, function (data) {
-      updateExplanationRequest(exReq);
 
-      explanationRequests.filter(function (el) {
-        return el.id !== exReq.id
+      $.getJSON(baseUrl + data.actions.siblings).done(function(data2) {
+        // add the last (newest explanation to explanations
+        explanations.push(data2.slice(-1)[0]);
+        updateExplanationRequest(exReq);
       });
-      explanations.push(exReq);
+
       console.info('Posted annotation.')
     });
 
@@ -357,6 +346,11 @@ chrome.runtime.onMessage.addListener(function (req, sender, sendResponse) {
   }
 });
 
+
+
+///////////////
+// Utilities //
+///////////////
 function httpGet(url, params, callback) {
 
   function serialize(obj) {
@@ -374,9 +368,8 @@ function httpGet(url, params, callback) {
 
   if (callback)
     httpRequest.onloadend = function () {
-      callback(JSON.parse(httpRequest.responseText))
+      callback(JSON.parse(httpRequest.responseText), httpRequest);
     };
-
   httpRequest.open('GET', baseUrl + url, true);
   httpRequest.send();
 
@@ -390,6 +383,38 @@ function httpPost(url, data, callback) {
 
   if (callback)
     httpRequest.onloadend = function () {
-      callback(JSON.parse(httpRequest.responseText));
+      var json = null;
+      try {
+        json = JSON.parse(httpRequest.responseText);
+      } catch(e) {}
+      callback(json, httpRequest);
     };
 }
+
+$.extend($.expr[':'], {
+  containsEscaped: function (el, index, m) {
+    var s = unescape(m[3]).replace(/[\s\n]+/g, " ").trim();
+    return $(el).text().replace(/[\s\n]+/g, " ").indexOf(s) >= 0;
+  }
+});
+
+// scrollParent is from Jquery-UI
+$.fn.scrollParent = function (includeHidden) {
+  var position = this.css("position"),
+    excludeStaticParent = position === "absolute",
+    overflowRegex = includeHidden ? /(auto|scroll|hidden)/ : /(auto|scroll)/,
+    scrollParent = this.parents().filter(function () {
+      var parent = $(this);
+      if (excludeStaticParent && parent.css("position") === "static") {
+        return false;
+      }
+      return overflowRegex.test(parent.css("overflow") + parent.css("overflow-y") + parent.css("overflow-x"));
+    }).eq(0);
+
+  return position === "fixed" || !scrollParent.length ? $(this[0].ownerDocument || document) : scrollParent;
+};
+$.fn.scrollView = function (duration) {
+  return this.each(function () {
+    $($(this).scrollParent()).get(0).scrollTop = $(this).offset().top - $($(this).scrollParent()).offset().top;
+  });
+};
