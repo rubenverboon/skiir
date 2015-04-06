@@ -219,7 +219,11 @@ LIMIT 4) AS c ON article.article_id = c.id"""()
           'date -> new Date(),
           'refs -> (json \ "references").toString
         ).executeInsert[Option[Long]]()
-      Created("").withHeaders("Location" -> s"requests/$rid/annotations/$id")
+      Created(Json.obj(
+        "actions" -> Json.obj(
+          "annotation" -> routes.API.getAnnotationsRequest(rid).toString
+        )
+      )).withHeaders("Location" -> s"requests/$rid/annotations/$id")
     } getOrElse noJsonBody
   }}
 
