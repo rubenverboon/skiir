@@ -1,23 +1,25 @@
 var baseUrl = 'http://127.0.0.1:9000'; // enter IP
 
-var explanationRequests = [], explanations = [], actions;
+var annotations = [], actions;
 
 var dialog = document.createElement('dialog');
 
-// START: document onReady
+// START of the program: document onReady
 (function () {
-  //insert dialog
   insertDialog();
 
   // get requests and annotations from the server and add them to the dom
-  httpGet("/articles/single", {url: window.location.href}, function (article) {
+  $.getJSON(baseUrl + '/articles/single', {url: window.location.href}).done(function(article) {
     actions = article.links;
-    show(article.requests, article.annotations);
+    annotations = article.annotations;
+    insertRequestsAndAnnotations(article.requests);
   });
 })();
 
+/**
+ * Creates the skeleton for the dialog.
+ */
 function insertDialog() {
-
   dialog.innerHTML =
     '<h3>Please explain this</h3>' +
     '<button id="close">&#x2716;</button>' +
@@ -37,32 +39,32 @@ function insertDialog() {
   document.body.insertBefore(dialog, document.body.firstChild);
 }
 
-function show(requests, explanations) {
-  // update de DOM met buttons en explanation components
+/**
+ * Initially updates the DOM with buttons from Request objects
+ *
+ * @param requests A list of Requests
+ */
+function insertRequestsAndAnnotations(requests) {
   // TODO: Bug! only 1 request per paragraph!
-  requests.forEach(function (exReq) {
-    // search page for explanationRequest.text_surroundings
+  requests.forEach(function (req) {
 
-    exReq.paragraph = getParagraphOfText(exReq.text_surroundings, exReq.text);
+    req.paragraph = _getParagraphOfText(req.text_surroundings, req.text);
 
-    var exs = explanations.filter(function (i) {
-      return exReq.id === i.request_id
-    });
+    var annotation = getBestAnnotation(req);
+    if(annotation) {
 
-    if (exs.length) {
-      // get the explanation with the most votes
-      exReq.explanation = exs.reduce(function (prev, curr) {
-        return curr.votes > prev.votes ? curr : prev;
-      });
-      addExplanation(exReq);
+      insertAnnotationElement(req, annotation);
     }
+    // otherwise, insert a regular Request
     else {
-      addExplanationRequest(exReq);
+      insertRequestElement(req);
     }
   });
 }
 
 /**
+ * Inserts an Annotation into the DOM in the following markup:
+ *
  * <span>
  *   <button>phrase
  *   <div>
@@ -70,20 +72,25 @@ function show(requests, explanations) {
  *     <p>explanation
  *     *<a>references
  *
- * @param ex Explanation
+ * @param req The Request
+ * @param annotation The Annotation of the request
  */
-function addExplanation(ex) {
+function insertAnnotationElement(req, annotation) {
 
   var span = document.createElement('span');
-  var button = document.createElement('button');
-  button.textContent = ex.text;
-
   span.className = 'skiir-explanation';
+
+  var button = document.createElement('button');
+  button.textContent = req.text;
+  button.onclick = function () {
+    _toggleShow(span);
+  };
+
   var links = '';
-  if (ex.explanation.references) {
+  if (annotation.references) {
     links += '<div class="links">';
-    for (var key in ex.explanation.references) {
-      links += '<a href="' + ex.explanation.references[key] + '">[' + key + ']</a>';
+    for (var key in annotation.references) {
+      links += '<a href="' + annotation.references[key] + '">[' + key + ']</a>';
     }
     links += '</div>';
   }
@@ -92,38 +99,300 @@ function addExplanation(ex) {
   improveButton.textContent = 'Improve';
   improveButton.className = 'skiir-button skiir-button-green improve';
   improveButton.onclick = function () {
-    openDialog(ex);
+    openDialog(req);
   };
+
   var div = document.createElement('div');
-  div.className = "skiir-explanation-box"
-  div.innerHTML = '<p>' + ex.explanation.answer + '</p>' + links;
+  div.className = "skiir-explanation-box";
+  div.innerHTML = '<p>' + annotation.answer + '</p>' + links;
   div.insertBefore(improveButton, div.firstChild);
+
   span.appendChild(button);
   span.appendChild(div);
+
+  replaceTextInParagraphWithElement(req.text, req.paragraph, span);
+
+  req.htmlElement = span;
+}
+
+/**
+ * Inserts a Request button into the DOM with the following markup:
+ *
+ * <button>phrase
+ *
+ * @param req Explanation Request object
+ */
+function insertRequestElement(req) {
+
+  var button = document.createElement('button');
+  button.className = 'skiir-help';
+  button.textContent = req.text;
   button.onclick = function () {
-    toggleShow(span);
+    openDialog(req)
   };
 
+  replaceTextInParagraphWithElement(req.text, req.paragraph, button);
+
+  req.htmlElement = button;
+}
+
+/**
+ * Replaces the Request htmlElement with the best Annotation.
+ *
+ * @param req Request object
+ */
+function upgradeAnnotationElement(req) {
+
+  var annotation = getBestAnnotation(req);
+
+  if(!annotation)
+    return;
+
+  // remove current element from paragraph
+  req.paragraph.innerHTML = req.paragraph.innerHTML.replace(req.htmlElement.outerHTML, req.text);
+
+  delete req.htmlElement;
+
+  insertAnnotationElement(req, annotation);
+}
+
+/**
+ * Gets the annotation with the highest vote.
+ * @param req Request
+ */
+function getBestAnnotation(req) {
+  var reqAnnotations = annotations.filter(function (i) {
+    return req.id === i.request_id
+  });
+  if(!reqAnnotations.length)
+    return null;
+
+  return reqAnnotations.reduce(function (prev, curr) {
+    return curr.votes > prev.votes ? curr : prev;
+  });
+}
+
+/**
+ * Replaces a string within a paragraph with an html element
+ * @param text
+ * @param paragraph
+ * @param element
+ */
+function replaceTextInParagraphWithElement(text, paragraph, element) {
   try {
 
-    var paragraph = ex.paragraph;
-    var text = paragraph.innerHTML.split(ex.text);
+    var splittedText = paragraph.innerHTML.split(text);
 
     while (paragraph.firstChild) paragraph.removeChild(paragraph.firstChild);
 
-    paragraph.insertAdjacentHTML('afterbegin', text[0]);
-    paragraph.appendChild(span);
-    paragraph.insertAdjacentHTML('beforeend', text[1]);
+    paragraph.insertAdjacentHTML('afterbegin', splittedText[0]);
+    paragraph.appendChild(element);
+    paragraph.insertAdjacentHTML('beforeend', splittedText[1]);
 
   } catch (err) {
     console.error(err);
   }
-
-  ex.span = span;
-  explanations.push(ex);
 }
 
-function toggleShow(span) {
+/**
+ * Opens the dialog, fleshes out the skeleton with the request text, snippets, and existing annotations.
+ *
+ * @param req Request
+ */
+function openDialog(req) {
+
+  dialog.showModal();
+
+  _buildContextParagraphIn(dialog.querySelector('p#context'), req);
+
+  // get related articles for snippets
+  $.getJSON(baseUrl + req.actions.relatedArticles)
+  .done(function (data) {
+    _buildSnippetsIn(dialog.querySelector('div#relatedArticles'), data);
+  });
+
+  // build annotations with vote buttons
+  _buildAnnotationsIn(document.querySelector('div#annotations'), req);
+
+  // Submitting of Annotation:
+  dialog.querySelector('#done').onclick = function (e) {
+    var textarea = dialog.querySelector('textarea');
+
+    // Can't submit empty annotation
+    if (!textarea.value)
+      return;
+
+    var references = [].map.call( // return all values from checked checkboxes
+      dialog.querySelectorAll('[type="checkbox"]:checked'), function (obj) {
+        return obj.value;
+      });
+
+    console.info("Sending annotation to server", textarea.value);
+    $.ajax({
+      url: baseUrl + req.actions.annotate,
+      data: JSON.stringify({
+        explanation: textarea.value,
+        references: references
+      }),
+      contentType: 'application/json',
+      method: 'POST'
+    }).done(function (data) {
+
+      $.getJSON(baseUrl + data.actions.siblings).done(function(data2) {
+        // add the last (newest) explanation to annotations
+        annotations.push(data2.slice(-1)[0]);
+        upgradeAnnotationElement(req);
+      });
+
+      console.info('Posted annotation.')
+    });
+
+    textarea.value = "";
+
+    dialog.close();
+  };
+}
+
+/**
+ * Fills the [contextElement] with highlighted text from the [req]
+ * @param contextElement ParagraphElement
+ * @param req Request
+ * @private
+ */
+function _buildContextParagraphIn(contextElement, req) {
+  var highlight = document.createElement('span');
+  highlight.id = 'exReqText';
+  highlight.textContent = req.text;
+  contextElement.innerHTML = req.text_surroundings;
+  replaceTextInParagraphWithElement(req.text, contextElement, highlight);
+  $("#exReqText").scrollView();
+}
+
+/**
+ * Adds snippets with checkboxes to the [snippetsElement]
+ * <div class="row">
+ *   <label><input>
+ *   <div>
+ *     <a>
+ *       <h4> article title
+ *       <p>snippet
+ * @param snippetsElement
+ * @param snippetData
+ * @private
+ */
+function _buildSnippetsIn(snippetsElement, snippetData) {
+  var snippetsHtml = '';
+  snippetData.forEach(function (s) {
+    snippetsHtml +=
+      '<div class="row">' +
+      '<label><input type="checkbox" value="' + s.url + '"></label>' +
+      '<div>' +
+      '<a href="' + s.url + '">' +
+      '<h4>' + s.title.toUpperCase() + '</h4>' +
+      s.snippets.map(_stringify).reduce(function (a, b) {
+        return a + b
+      }, "") +
+      '</a></div>' +
+      '</div>';
+  });
+  snippetsElement.innerHTML = snippetsHtml;
+}
+
+/**
+ * Adds Annotations with vote buttons to the [annotationElement]
+ * @param annotationsElement
+ * @param req
+ * @private
+ */
+function _buildAnnotationsIn(annotationsElement, req) {
+  annotationsElement.innerHTML = '';
+
+  var reqAnnotations = annotations.filter(function (i) {
+    return req.id === i.request_id
+  });
+  reqAnnotations.sort(function (a, b) {
+    return b.votes - a.votes
+  });
+
+  reqAnnotations.forEach(function (annotation) {
+
+    annotation.voteButton = document.createElement('button');
+    annotation.voteButton.className = 'skiir-button vote';
+    annotation.voteButton.textContent = 'Vote';
+    annotation.voteButton.onclick = function() {
+      vote(annotation, req);
+    };
+
+    var rowDiv = document.createElement('div');
+    rowDiv.className = 'row';
+
+    rowDiv.insertAdjacentHTML('afterbegin', '<div class="skiir-button-prefix votes">' + annotation.votes + '</div>');
+    rowDiv.appendChild(annotation.voteButton);
+    rowDiv.insertAdjacentHTML('beforeend', '<span>' + annotation.answer + '</span>');
+
+    annotationsElement.appendChild(rowDiv);
+  });
+}
+
+/**
+ * Votes for this Annotation for a specific Request
+ * @param annotation
+ * @param req
+ */
+function vote(annotation, req) {
+
+  $.post(baseUrl + annotation.actions.vote, null, function () {
+    annotation.votes += 1;
+    annotation.voteButton.previousElementSibling.textContent = annotation.votes;
+    upgradeAnnotationElement(req);
+  });
+}
+
+
+// Adds a Request after right-clicking:
+chrome.runtime.onMessage.addListener(function (req, sender, sendResponse) {
+  if (req.details) {
+    var exReq = req.details;
+    console.debug("Send annotation request to server", exReq);
+
+    var postbody = {
+      "article_url": window.location.href,
+      "article_title": document.title,
+      "article_text": document.querySelector('.article-body').textContent,
+      "request_text": exReq.text,
+      "request_text_surroundings": _getParagraphOfSelection().textContent
+    };
+    var paragraph = _getParagraphOfSelection();
+
+    $.ajax({
+      url: baseUrl + "/requests",
+      data: JSON.stringify(postbody),
+      contentType: 'application/json',
+      method: 'POST'
+    }).done(function (data) {
+      // The request was saved, now display annotation request:
+      $.getJSON(baseUrl + data.actions.self).done(function (exReq) {
+        exReq.paragraph = paragraph;
+        insertRequestElement(exReq);
+        //openDialog(exReq);
+      });
+    });
+  }
+});
+
+
+
+////////////////////////////////////
+//         Utilities              //
+// The functions below are boring //
+////////////////////////////////////
+
+/**
+ * Adds or removes a 'show' class
+ * @param span
+ * @private
+ */
+function _toggleShow(span) {
   if (span.classList.contains('show')) {
     span.classList.remove('show');
   } else {
@@ -132,58 +401,12 @@ function toggleShow(span) {
 }
 
 /**
- * <button>phrase
- * @param exReq Explanation Request object
+ * Builds a snippet HTML string from a snippet
+ * @param snip
+ * @returns {*} HTML string
+ * @private
  */
-function addExplanationRequest(exReq) {
-
-  var button = document.createElement('button');
-  button.className = 'skiir-help';
-  button.textContent = exReq.text;
-  button.onclick = function () {
-    openDialog(exReq)
-  };
-
-  try {
-
-    var paragraph = exReq.paragraph;
-    var text = paragraph.innerHTML.split(exReq.text);
-
-    while (paragraph.firstChild) paragraph.removeChild(paragraph.firstChild);
-
-    paragraph.insertAdjacentHTML('afterbegin', text[0]);
-    paragraph.appendChild(button);
-    paragraph.insertAdjacentHTML('beforeend', text[1]);
-
-  }
-  catch (err) {
-    console.error(err);
-  }
-  exReq.button = button;
-  explanationRequests.push(exReq);
-}
-
-function updateExplanationRequest(exReq) {
-
-  var exs = explanations.filter(function (i) {
-    return exReq.id === i.request_id
-  });
-
-  if (exs.length) {
-    // get the explanation with the most votes
-    exReq.explanation = exs.reduce(function (prev, curr) {
-      return curr.votes > prev.votes ? curr : prev;
-    });
-
-    exReq.paragraph.innerHTML = exReq.paragraph.innerHTML.replace(exReq.button.outerHTML, exReq.text);
-
-    delete exReq.button;
-
-    addExplanation(exReq);
-  }
-}
-
-function stringify(snip) {
+function _stringify(snip) {
   result = '';
   var bolds = snip.bolds[0];
   var start = snip.outer[0];
@@ -200,103 +423,24 @@ function stringify(snip) {
   return result;
 }
 
-function openDialog(exReq) {
-
-  var highlight = '<span id="exReqText">' + exReq.text + '</span>';
-  dialog.showModal();
-  dialog.querySelector('p#context').innerHTML = exReq.text_surroundings.replace(exReq.text, highlight);
-  $("#exReqText").scrollView();
-
-  // get related articles for snippets
-  httpGet(exReq.actions.relatedArticles, null, function (data) {
-    var snippetsHtml = '';
-    data.forEach(function (s) {
-      snippetsHtml +=
-        '<div class="row">' +
-        '<label><input type="checkbox" value="' + s.url + '"></label>' +
-        '<div>' +
-        '<a href="' + s.url + '">' +
-        '<h4>' + s.title.toUpperCase() + '</h4>' +
-        s.snippets.map(stringify).reduce(function (a, b) {
-          return a + b
-        }, "") +
-        '</a></div>' +
-        '</div>';
-    });
-
-    dialog.querySelector('div#relatedArticles').innerHTML = snippetsHtml;
-
-  });
-
-  // get annotations for vote buttons
-  httpGet(exReq.actions.annotations, null, function (data) {
-    var snippetsHtml = '<div id ="skiir-dialog-ol">';
-    data.sort(function (a, b) {
-      return b.votes - a.votes
-    });
-    data.forEach(function (s) {
-      var vote_url = s.actions.vote;
-      snippetsHtml +=
-        '<div class="row"><div class="skiir-button-prefix votes">' + s.votes + '</div>' +
-        '<button class="skiir-button vote" data-url="' + vote_url + '">Vote</button>' +
-        '<span>' + s.answer + '</span></div>';
-    });
-    snippetsHtml += '</div>';
-    dialog.querySelector('div#annotations').innerHTML = snippetsHtml;
-  });
-
-  // Vote button functionality
-  $(dialog).off("click", "button.vote");
-  $(dialog).on("click", "button.vote", function () {
-    var b = $(this);
-    $.post(baseUrl + b.attr('data-url'), null, function () {
-      b.prev(".votes").text(1 + parseInt(b.prev(".votes").text()));
-    });
-  });
-
-  // Submitting of Annotation:
-  dialog.querySelector('#done').onclick = function (e) {
-    var textarea = dialog.querySelector('textarea');
-
-    // Can't submit empty annotation
-    if (!textarea.value)
-      return;
-
-    var references = [].map.call( // return all values from checked checkboxes
-      dialog.querySelectorAll('[type="checkbox"]:checked'), function (obj) {
-        return obj.value;
-      });
-
-    var postData = {
-      explanation: textarea.value,
-      references: references
-    };
-    console.info("Sending annotation to server", textarea.value);
-
-    textarea.value = "";
-
-    httpPost(exReq.actions.annotate, postData, function (data) {
-
-      $.getJSON(baseUrl + data.actions.siblings).done(function(data2) {
-        // add the last (newest explanation to explanations
-        explanations.push(data2.slice(-1)[0]);
-        updateExplanationRequest(exReq);
-      });
-
-      console.info('Posted annotation.')
-    });
-
-    dialog.close();
-  };
-}
-
-function getParagraphOfText(surround, text) {
-  var match = $("p:containsEscaped(" + escape(surround) + ") p:containsEscaped(" + escape(text) + ")");
+/**
+ *
+ * @param text_surroundings Text of a paragraph that surrounds the `text`
+ * @param text The selected phrase within a paragraph
+ * @returns {*} Paragraph HtmlElement
+ * @private
+ */
+function _getParagraphOfText(text_surroundings, text) {
+  var match = $("p:containsEscaped(" + escape(text_surroundings) + ") p:containsEscaped(" + escape(text) + ")");
   match = match.size() && match || $("p:containsEscaped(" + escape(text) + ")");
   return match.get(0);
 }
 
-function getSelectionParentElement() {
+/**
+ * @returns {*} Paragraph HtmlElement of a mouse selection.
+ * @private
+ */
+function _getParagraphOfSelection() {
   var parentEl = null, sel;
   if (window.getSelection) {
     sel = window.getSelection();
@@ -310,85 +454,6 @@ function getSelectionParentElement() {
     parentEl = sel.createRange().parentElement();
   }
   return parentEl;
-}
-
-// Adding a Request via right-clicking:
-chrome.runtime.onMessage.addListener(function (req, sender, sendResponse) {
-  if (req.details) {
-    var exReq = req.details;
-    console.debug("Send annotation request to server", exReq);
-
-    var postbody = {
-      "article_url": window.location.href,
-      "article_title": document.title,
-      "article_text": document.querySelector('.article-body').textContent,
-      "request_text": exReq.text,
-      "request_text_surroundings": getSelectionParentElement().textContent
-    };
-    var paragraph = getSelectionParentElement();
-
-    $.ajax({
-      url: baseUrl + "/requests",
-      data: JSON.stringify(postbody),
-      contentType: 'application/json',
-      'type': 'POST'
-    }).done(function (data) {
-      // The request was saved, now display annotation request:
-      $.getJSON(baseUrl + data.actions.self).done(function (exReq) {
-        exReq.paragraph = paragraph;
-        addExplanationRequest(exReq);
-        //openDialog(exReq);
-      });
-    }).fail(function () {
-
-    });
-    sendResponse({farewell: "goodbye"});
-  }
-});
-
-
-
-///////////////
-// Utilities //
-///////////////
-function httpGet(url, params, callback) {
-
-  function serialize(obj) {
-    var str = [];
-    for (var p in obj)
-      if (obj.hasOwnProperty(p)) {
-        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
-      }
-    return str.join("&");
-  }
-
-  if (params) url += '?' + serialize(params);
-
-  var httpRequest = new XMLHttpRequest();
-
-  if (callback)
-    httpRequest.onloadend = function () {
-      callback(JSON.parse(httpRequest.responseText), httpRequest);
-    };
-  httpRequest.open('GET', baseUrl + url, true);
-  httpRequest.send();
-
-}
-
-function httpPost(url, data, callback) {
-  var httpRequest = new XMLHttpRequest();
-  httpRequest.open("POST", baseUrl + url, true);
-  httpRequest.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-  httpRequest.send(JSON.stringify(data));
-
-  if (callback)
-    httpRequest.onloadend = function () {
-      var json = null;
-      try {
-        json = JSON.parse(httpRequest.responseText);
-      } catch(e) {}
-      callback(json, httpRequest);
-    };
 }
 
 $.extend($.expr[':'], {
