@@ -111,9 +111,9 @@ function addExplanation(ex) {
 
     while (paragraph.firstChild) paragraph.removeChild(paragraph.firstChild);
 
-    paragraph.appendChild(document.createTextNode(text[0]));
+    paragraph.insertAdjacentHTML('afterbegin', text[0]);
     paragraph.appendChild(span);
-    paragraph.appendChild(document.createTextNode(text[1]));
+    paragraph.insertAdjacentHTML('beforeend', text[1]);
 
   } catch (err) {
     console.error(err);
@@ -151,9 +151,9 @@ function addExplanationRequest(exReq) {
 
     while (paragraph.firstChild) paragraph.removeChild(paragraph.firstChild);
 
-    paragraph.appendChild(document.createTextNode(text[0]));
+    paragraph.insertAdjacentHTML('afterbegin', text[0]);
     paragraph.appendChild(button);
-    paragraph.appendChild(document.createTextNode(text[1]));
+    paragraph.insertAdjacentHTML('beforeend', text[1]);
 
   }
   catch (err) {
