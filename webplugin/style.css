@@ -140,7 +140,12 @@
     /* padding after vote button */
     padding-left: 15px;
 }
-#skiir-dialog #skiir-dialog-ol .row {
+
+#skiir-dialog #annotations {
+    list-style-type: upper-roman;
+    text-align: left;
+}
+#skiir-dialog #annotations .row {
     /* aligns annotation text in the middle of the vote button */
     align-items: center;
 }
@@ -176,11 +181,6 @@
 #skiir-dialog #snippets label input, #skiir-dialog #relatedArticles label input {
     zoom: 3;
     margin-right: 15px;
-}
-
-#skiir-dialog-ol {
-    list-style-type: upper-roman;
-    text-align: left;
 }
 
 #relatedArticles {
