@@ -77,7 +77,7 @@ object Requests {
               "annotate" -> api.routes.Annotations.addAnnotation(req).toString,
               "relatedArticles" -> api.routes.Articles.getRelatedArticlesOfRequest(req).toString
             )
-          )).withHeaders("Location" -> api.Articles.articleById(aid).toString())
+          ))
           case _ => BadRequest("Something went wrong while inserting request")
         }
       case _ => BadRequest("Provide the fields article_id, request_text, request_text_surroundings. Instead of giving an article_id an article can be directly looked up/created by providing article_url, article_text and article_date.")

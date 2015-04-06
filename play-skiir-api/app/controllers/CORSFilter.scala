@@ -46,7 +46,6 @@ case class CORSFilter() extends Filter{
         "Access-Control-Allow-Origin" -> allowedDomain.orElse(request.headers.get("Origin")).getOrElse(""),
         "Access-Control-Allow-Methods" -> request.headers.get("Access-Control-Request-Method").getOrElse("*"),
         "Access-Control-Allow-Headers" -> request.headers.get("Access-Control-Request-Headers").getOrElse(""),
-        "Access-Control-Expose-Headers" -> request.headers.get("Access-Control-Expose-Headers").getOrElse("Location"),
         "Access-Control-Allow-Credentials" -> "true"
       ))
     } else {
@@ -56,7 +55,6 @@ case class CORSFilter() extends Filter{
         "Access-Control-Allow-Origin" -> allowedDomain.orElse(request.headers.get("Origin")).getOrElse(""),
         "Access-Control-Allow-Methods" -> request.headers.get("Access-Control-Request-Method").getOrElse("*"),
         "Access-Control-Allow-Headers" -> request.headers.get("Access-Control-Request-Headers").getOrElse(""),
-        "Access-Control-Expose-Headers" -> request.headers.get("Access-Control-Expose-Headers").getOrElse("*"),
         "Access-Control-Allow-Credentials" -> "true"
       )}
     }
