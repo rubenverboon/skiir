@@ -15,10 +15,10 @@ case class Request(id: Long, article_id: Long, text_surroundings: String, text: 
   )
   def actionsJson = Json.obj(
     "actions" -> Json.obj(
-      "self" -> controllers.routes.API.getRequestById(id).toString,
-      "annotate" -> controllers.routes.API.addAnnotation(id).toString,
-      "relatedArticles" -> controllers.routes.API.getRelatedArticlesOnRequest(id).toString,
-      "annotations" -> controllers.routes.API.getAnnotationsRequest(id).toString
+      "self" -> controllers.api.routes.Requests.getRequestById(id).toString,
+      "annotate" -> controllers.api.routes.Annotations.addAnnotation(id).toString,
+      "relatedArticles" -> controllers.api.routes.Articles.getRelatedArticlesOfRequest(id).toString,
+      "annotations" -> controllers.api.routes.Annotations.getAnnotationOfRequest(id).toString
     )
   )
 }
@@ -67,7 +67,7 @@ case class Annotation(id: Long, request_id: Long, article_id: Long, answer: Stri
   )
   def actionsJson = Json.obj(
     "actions" -> Json.obj(
-      "vote" -> controllers.routes.API.voteAnnotation(request_id, id).toString
+      "vote" -> controllers.api.routes.Annotations.voteAnnotation(request_id, id).toString
     )
   )
 }
