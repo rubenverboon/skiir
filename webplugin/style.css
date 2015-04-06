@@ -87,7 +87,7 @@
 #skiir-dialog #close {
     position: absolute;
     right: 0;
-    top: 0;
+    top: 7px;
     background-color: white;
     border: 1px solid lightgrey;
     color: grey;
@@ -110,6 +110,9 @@
 }
 #skiir-dialog textarea {
     width: 100%;
+}
+.skiir-button-prefix {
+    width: 40px;
 }
 #skiir-dialog .skiir-button-prefix, #skiir-dialog textarea {
     padding: 10px 30px;
@@ -138,7 +141,8 @@
 }
 #skiir-dialog button.vote + span {
     /* padding after vote button */
-    padding-left: 15px;
+    width: 800px;
+    margin-left: 15px;
 }
 
 #skiir-dialog #annotations {
