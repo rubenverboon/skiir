@@ -164,7 +164,6 @@ function addExplanationRequest(exReq) {
 }
 
 function updateExplanationRequest(exReq) {
-  console.log(exReq);
 
   var exs = explanations.filter(function (i) {
     return exReq.id === i.request_id
@@ -194,7 +193,6 @@ function stringify(snip) {
   }).forEach(function (bold) {
     result = [result.slice(0, bold[1] - start), '</b>', result.slice(bold[1] - start)].join('');
     result = [result.slice(0, bold[0] - start), '<b>', result.slice(bold[0] - start)].join('');
-    //console.log(result);
   });
   if (start != 0) result = "..." + result;
   result += '...';
@@ -215,7 +213,7 @@ function openDialog(exReq) {
     data.forEach(function (s) {
       snippetsHtml +=
         '<div class="row">' +
-        '<label><input type="checkbox" value="' + s.reference + '"></label>' +
+        '<label><input type="checkbox" value="' + s.url + '"></label>' +
         '<div>' +
         '<a href="' + s.url + '">' +
         '<h4>' + s.title.toUpperCase() + '</h4>' +
@@ -278,11 +276,9 @@ function openDialog(exReq) {
     textarea.value = "";
 
     httpPost(exReq.actions.annotate, postData, function (data) {
-      console.log(data);
 
       $.getJSON(baseUrl + data.actions.annotation).done(function(data2) {
         // add the last (newest explanation to explanations
-        console.log(data2);
         explanations.push(data2.slice(-1)[0]);
         updateExplanationRequest(exReq);
       });
